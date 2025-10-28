@@ -386,10 +386,6 @@ export default function Login() {
               )}
             </form>
           )}
-          
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Need help? Contact your system administrator.</p>
-          </div>
         </CardContent>
       </Card>
     </div>
