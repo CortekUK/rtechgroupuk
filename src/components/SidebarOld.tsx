@@ -72,7 +72,7 @@ export const Sidebar = () => {
           {/* Logo/Brand */}
           <div className="flex h-16 items-center justify-center border-b px-4">
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-primary">RTECHGROUP USA</span>
+              <span className="text-lg font-bold text-primary">RTECHGROUP UK</span>
             </div>
           </div>
 
@@ -102,7 +102,7 @@ export const Sidebar = () => {
           {/* Footer */}
           <div className="border-t p-4">
             <div className="text-xs text-muted-foreground">
-              RTECHGROUP USA Fleet Management
+              RTECHGROUP UK Fleet Management
             </div>
           </div>
         </div>

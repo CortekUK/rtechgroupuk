@@ -140,7 +140,7 @@ export const AddPaymentDialog = ({
 
       toast({
         title: "Payment Recorded",
-        description: `Payment of $${data.amount} has been recorded and applied.`,
+        description: `Payment of £${data.amount} has been recorded and applied.`,
       });
 
       form.reset();
@@ -249,7 +249,7 @@ export const AddPaymentDialog = ({
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Amount ($)</FormLabel>
+                  <FormLabel>Payment Amount (£)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"

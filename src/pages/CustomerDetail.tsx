@@ -244,7 +244,7 @@ const CustomerDetail = () => {
             <p className="text-xs text-muted-foreground">Total Payments</p>
             {paymentStats?.totalPayments && paymentStats.totalPayments > 0 && (
               <p className="text-sm font-medium text-muted-foreground">
-                ${paymentStats.totalPayments.toLocaleString()}
+                £{paymentStats.totalPayments.toLocaleString()}
               </p>
             )}
           </CardContent>
@@ -262,7 +262,7 @@ const CustomerDetail = () => {
             <p className="text-xs text-muted-foreground">Open Fines</p>
             {fineStats?.openFineAmount && fineStats.openFineAmount > 0 && (
               <p className="text-sm font-medium text-destructive">
-                ${fineStats.openFineAmount.toLocaleString()}
+                £{fineStats.openFineAmount.toLocaleString()}
               </p>
             )}
           </CardContent>
@@ -375,7 +375,7 @@ const CustomerDetail = () => {
                             {rental.end_date ? format(new Date(rental.end_date), "MM/dd/yyyy") : "Ongoing"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            ${rental.monthly_amount.toLocaleString()}
+                            £{rental.monthly_amount.toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Badge variant={rental.status === 'Active' ? 'default' : 'secondary'}>
@@ -444,7 +444,7 @@ const CustomerDetail = () => {
                             {format(new Date(payment.payment_date), "MM/dd/yyyy")}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            ${payment.amount.toLocaleString()}
+                            £{payment.amount.toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">{payment.method}</Badge>
@@ -469,7 +469,7 @@ const CustomerDetail = () => {
                           <TableCell className="text-right">
                             {payment.remaining_amount > 0 ? (
                               <span className="text-orange-600 font-medium">
-                                ${payment.remaining_amount.toLocaleString()}
+                                £{payment.remaining_amount.toLocaleString()}
                               </span>
                             ) : (
                               <span className="text-green-600 font-medium">Fully Applied</span>
@@ -547,7 +547,7 @@ const CustomerDetail = () => {
                             </div>
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            ${fine.amount.toLocaleString()}
+                            £{fine.amount.toLocaleString()}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
                             {format(new Date(fine.issue_date), "MM/dd/yyyy")}
@@ -625,7 +625,7 @@ const CustomerDetail = () => {
                             {history.end_date ? format(new Date(history.end_date), "MM/dd/yyyy") : "Ongoing"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            ${history.monthly_amount.toLocaleString()}
+                            £{history.monthly_amount.toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Badge variant={history.status === 'Active' ? 'default' : 'secondary'}>

@@ -277,7 +277,7 @@ const PaymentsList = () => {
                            </TableCell>
                            <TableCell>{payment.method || '-'}</TableCell>
                           <TableCell className="text-right font-medium">
-                            ${payment.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ${payment.amount.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
                           </TableCell>
                           <TableCell>
                             {allocatedAmount === payment.amount ? (

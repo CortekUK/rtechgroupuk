@@ -40,8 +40,8 @@ import { cn } from "@/lib/utils";
 
 const DOCUMENT_TYPES = [
   'Insurance Certificate',
-  "Driver's License",
-  'Social Security',
+  'Driving Licence',
+  'National Insurance',
   'Address Proof',
   'ID Card/Passport',
   'Other'

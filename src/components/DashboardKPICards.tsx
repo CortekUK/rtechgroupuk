@@ -6,12 +6,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { 
   AlertTriangle, 
   Calendar, 
-  PoundSterling, 
   Users, 
   Bell, 
   Info,
   ExternalLink,
-  DollarSign
+  PoundSterling
 } from "lucide-react";
 import { DashboardKPIs } from "@/hooks/useDashboardKPIs";
 
@@ -21,7 +20,7 @@ interface DashboardKPICardsProps {
   error?: Error | null;
 }
 
-const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`;
+const formatCurrency = (amount: number) => `£${amount.toLocaleString()}`;
 
 const KPICard = ({ 
   title, 
@@ -223,7 +222,7 @@ export const DashboardKPICards = ({ data, isLoading, error }: DashboardKPICardsP
         title="Finance Costs"
         value={formatCurrency(data.financeCosts.amount)}
         subtitle="Selected period"
-        icon={DollarSign}
+        icon={PoundSterling}
         variant="default"
         onClick={() => navigate('/pl-dashboard?category=Finance')}
         tooltip="Finance-related costs for the selected date range"

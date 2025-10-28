@@ -233,7 +233,7 @@ const FinesList = () => {
         </TableCell>
         
         <TableCell className="text-right font-medium">
-          ${Number(fine.amount).toLocaleString()}
+          £{Number(fine.amount).toLocaleString()}
         </TableCell>
         
         <TableCell className="text-right">

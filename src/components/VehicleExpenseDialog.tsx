@@ -108,7 +108,7 @@ export const VehicleExpenseDialog = ({ onSubmit, isLoading }: VehicleExpenseDial
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount ($)</FormLabel>
+                  <FormLabel>Amount (£)</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 

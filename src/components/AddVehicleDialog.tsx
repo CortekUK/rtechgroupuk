@@ -28,7 +28,7 @@ const vehicleSchema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   year: z.number().min(1900, "Year must be after 1900").max(new Date().getFullYear() + 1, "Year cannot be in the future").optional(),
-  colour: z.string().min(1, "Color is required"),
+  colour: z.string().min(1, "Colour is required"),
   purchase_price: z.number().min(0, "Price must be positive").optional(),
   contract_total: z.number().min(0, "Contract total must be positive").optional(),
   acquisition_date: z.date(),
@@ -336,7 +336,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                     name="colour"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Color</FormLabel>
+                        <FormLabel>Colour</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. White" {...field} />
                         </FormControl>
@@ -350,7 +350,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                     name="purchase_price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Purchase Price ($)</FormLabel>
+                        <FormLabel>Purchase Price (£)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -372,7 +372,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                     name="mot_due_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Inspection Due Date</FormLabel>
+                        <FormLabel>MOT Due Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -412,7 +412,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                     name="tax_due_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Registration Due Date</FormLabel>
+                        <FormLabel>TAX Due Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -562,7 +562,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                       name="contract_total"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contract Total ($)</FormLabel>
+                          <FormLabel>Contract Total (£)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -713,9 +713,9 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Has Ghost Immobilizer</FormLabel>
+                          <FormLabel className="text-base">Has Ghost Immobiliser</FormLabel>
                           <div className="text-sm text-muted-foreground">
-                            Vehicle has a Ghost immobilizer system
+                            Vehicle has a Ghost immobiliser system
                           </div>
                         </div>
                         <FormControl>
@@ -778,9 +778,9 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Has Remote Immobilizer</FormLabel>
+                          <FormLabel className="text-base">Has Remote Immobiliser</FormLabel>
                           <div className="text-sm text-muted-foreground">
-                            Vehicle has a remote immobilizer system
+                            Vehicle has a remote immobiliser system
                           </div>
                         </div>
                         <FormControl>

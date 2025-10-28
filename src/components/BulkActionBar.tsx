@@ -181,16 +181,16 @@ export const BulkActionBar = ({ selectedFines, onClearSelection }: BulkActionBar
           <AlertDialogHeader>
             <AlertDialogTitle>Charge {chargeableFiles.length} Fines to Customer Accounts</AlertDialogTitle>
             <AlertDialogDescription>
-              This will create charges of ${chargeableFiles.reduce((sum, fine) => sum + fine.amount, 0).toLocaleString()} 
+              This will create charges of £{chargeableFiles.reduce((sum, fine) => sum + fine.amount, 0).toLocaleString()}
               to the respective customer accounts. This action cannot be undone.
-              
+
               <div className="mt-4 p-3 bg-muted rounded">
                 <p className="text-sm font-medium mb-2">Eligible fines ({chargeableFiles.length}):</p>
                 <div className="max-h-32 overflow-y-auto space-y-1">
                   {chargeableFiles.map(fine => (
                     <div key={fine.id} className="text-xs flex justify-between">
                       <span>{fine.reference_no || fine.id.slice(0, 8)}</span>
-                      <span>${fine.amount.toLocaleString()}</span>
+                      <span>£{fine.amount.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -216,7 +216,7 @@ export const BulkActionBar = ({ selectedFines, onClearSelection }: BulkActionBar
           <AlertDialogHeader>
             <AlertDialogTitle>Waive {waivableFiles.length} Selected Fines</AlertDialogTitle>
             <AlertDialogDescription>
-              This will waive the selected fines totaling ${waivableFiles.reduce((sum, fine) => sum + fine.amount, 0).toLocaleString()}.
+              This will waive the selected fines totaling £{waivableFiles.reduce((sum, fine) => sum + fine.amount, 0).toLocaleString()}.
               Waived fines will not be charged to customers. This action cannot be undone.
 
               <div className="mt-4 p-3 bg-muted rounded">
@@ -225,7 +225,7 @@ export const BulkActionBar = ({ selectedFines, onClearSelection }: BulkActionBar
                   {waivableFiles.map(fine => (
                     <div key={fine.id} className="text-xs flex justify-between">
                       <span>{fine.reference_no || fine.id.slice(0, 8)}</span>
-                      <span>${fine.amount.toLocaleString()}</span>
+                      <span>£{fine.amount.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>

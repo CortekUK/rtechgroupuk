@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx supabase db push:*)"
+      "Bash(npx supabase db push:*)",
+      "Bash(grep -n \"$$\" components/RentalPaymentRow.tsx)",
+      "Bash(grep -n \"$$\" components/EnhancedVehiclePlatesPanel.tsx)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

@@ -23,7 +23,7 @@ const vehicleSchema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   year: z.number().min(1900, "Year must be after 1900").max(new Date().getFullYear() + 1, "Year cannot be in the future").optional(),
-  colour: z.string().min(1, "Color is required"),
+  colour: z.string().min(1, "Colour is required"),
   purchase_price: z.preprocess((val) => val === null ? undefined : val, z.number().min(0, "Price must be positive").optional()),
   acquisition_date: z.date(),
   acquisition_type: z.enum(['Purchase', 'Finance']),
@@ -360,7 +360,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                 name="colour"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Color</FormLabel>
+                    <FormLabel>Colour</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. White" {...field} />
                     </FormControl>
@@ -374,7 +374,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                   name="purchase_price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Purchase Price ($)</FormLabel>
+                      <FormLabel>Purchase Price (£)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -390,14 +390,14 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
               )}
             </div>
 
-            {/* Inspection & Registration Due Dates */}
+            {/* MOT & TAX Due Dates */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="mot_due_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Inspection Due Date</FormLabel>
+                    <FormLabel>MOT Due Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -437,7 +437,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                 name="tax_due_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Registration Due Date</FormLabel>
+                    <FormLabel>TAX Due Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -592,7 +592,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                     name="monthly_payment"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Monthly Payment ($) *</FormLabel>
+                        <FormLabel>Monthly Payment (£) *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -610,7 +610,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                     name="initial_payment"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Initial Payment ($)</FormLabel>
+                        <FormLabel>Initial Payment (£)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -649,7 +649,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                     name="balloon"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Balloon Payment ($)</FormLabel>
+                        <FormLabel>Balloon Payment (£)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -719,7 +719,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                       <div className="space-y-0.5">
                         <FormLabel>Ghost Immobilizer</FormLabel>
                         <div className="text-sm text-muted-foreground">
-                          Vehicle has a ghost immobilizer fitted
+                          Vehicle has a ghost immobiliser fitted
                         </div>
                       </div>
                       <FormControl>
@@ -743,7 +743,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                           <div className="relative">
                             <Input
                               type={showGhostCode ? "text" : "password"}
-                              placeholder="Enter ghost immobilizer code" 
+                              placeholder="Enter ghost immobiliser code" 
                               {...field} 
                             />
                             <Button
@@ -796,7 +796,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                       <div className="space-y-0.5">
                         <FormLabel>Remote Immobilizer</FormLabel>
                         <div className="text-sm text-muted-foreground">
-                          Vehicle has remote immobilizer capability
+                          Vehicle has remote immobiliser capability
                         </div>
                       </div>
                       <FormControl>

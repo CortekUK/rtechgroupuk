@@ -396,7 +396,7 @@ export const EnhancedAddPlateDialog = ({
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. DMV Direct" {...field} />
+                      <Input placeholder="e.g. DVLA Direct" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -446,7 +446,7 @@ export const EnhancedAddPlateDialog = ({
                 name="cost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cost ($)</FormLabel>
+                    <FormLabel>Cost (£)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 

@@ -52,7 +52,7 @@ export function AcceptanceTestVehicleExpenses() {
           name: 'Service Expense → Service P&L Category',
           passed: serviceTestPassed,
           details: serviceTestPassed ? 
-            `✓ Service expense correctly categorized in P&L: $${pnlEntry.amount}` :
+            `✓ Service expense correctly categorized in P&L: £${pnlEntry.amount}` :
             `✗ P&L entry incorrect: ${JSON.stringify(pnlEntry)}`
         });
 
@@ -101,7 +101,7 @@ export function AcceptanceTestVehicleExpenses() {
           name: 'Repair Expense → Expenses P&L Category',
           passed: repairTestPassed,
           details: repairTestPassed ? 
-            `✓ Repair expense correctly categorized as Expenses: $${pnlEntry.amount}` :
+            `✓ Repair expense correctly categorized as Expenses: £${pnlEntry.amount}` :
             `✗ P&L entry incorrect: ${JSON.stringify(pnlEntry)}`
         });
 

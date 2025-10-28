@@ -230,7 +230,7 @@ export const EnhancedVehiclePlatesPanel = ({ vehicleId, vehicleReg }: EnhancedVe
                         {plate.order_date ? format(new Date(plate.order_date), "MM/dd/yyyy") : "-"}
                       </TableCell>
                       <TableCell className="text-right">
-                        {plate.cost ? `$${Number(plate.cost).toFixed(2)}` : "-"}
+                        {plate.cost ? `£${Number(plate.cost).toFixed(2)}` : "-"}
                       </TableCell>
                       <TableCell>
                         {plate.document_url ? (

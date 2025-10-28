@@ -150,7 +150,7 @@ export const PlateHistoryDrawer = ({
               {plate.cost && (
                 <div>
                   <span className="text-muted-foreground">Cost:</span>
-                  <span className="ml-2">${Number(plate.cost).toFixed(2)}</span>
+                  <span className="ml-2">£{Number(plate.cost).toFixed(2)}</span>
                 </div>
               )}
               {plate.order_date && (

@@ -334,7 +334,7 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                 name="colour"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Color</FormLabel>
+                    <FormLabel>Colour</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. White" {...field} />
                     </FormControl>
@@ -348,7 +348,7 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                   name="purchase_price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Purchase Price ($)</FormLabel>
+                      <FormLabel>Purchase Price (£)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -399,7 +399,7 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                   name="contract_total"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Contract Total ($) *</FormLabel>
+                      <FormLabel>Contract Total (£) *</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -602,7 +602,7 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium">Ghost Immobilizer</label>
                   <div className="text-sm text-muted-foreground">
-                    Vehicle has a Ghost immobilizer installed
+                    Vehicle has a Ghost immobiliser installed
                   </div>
                 </div>
                 <Switch
@@ -646,7 +646,7 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium">Remote Immobilizer</label>
                   <div className="text-sm text-muted-foreground">
-                    Vehicle has a remote immobilizer system
+                    Vehicle has a remote immobiliser system
                   </div>
                 </div>
                 <Switch

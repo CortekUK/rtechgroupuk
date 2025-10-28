@@ -222,7 +222,7 @@ export const DashboardStats = () => {
       />
       <StatCard
         title="Monthly Revenue"
-        value={`$${monthlyRevenue?.toLocaleString() || "0"}`}
+        value={`£${monthlyRevenue?.toLocaleString() || "0"}`}
         icon={PoundSterling}
         variant="success"
       />

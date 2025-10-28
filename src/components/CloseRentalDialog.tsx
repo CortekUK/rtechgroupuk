@@ -139,7 +139,7 @@ export const CloseRentalDialog = ({ open, onOpenChange, rental }: CloseRentalDia
                 <p><span className="font-medium">Customer:</span> {rental.customer.name}</p>
                 <p><span className="font-medium">Vehicle:</span> {rental.vehicle.reg} ({rental.vehicle.make} {rental.vehicle.model})</p>
                 <p><span className="font-medium">Start Date:</span> {new Date(rental.start_date).toLocaleDateString()}</p>
-                <p><span className="font-medium">Monthly Amount:</span> ${rental.monthly_amount.toLocaleString()}</p>
+                <p><span className="font-medium">Monthly Amount:</span> £{rental.monthly_amount.toLocaleString()}</p>
               </div>
             </div>
 

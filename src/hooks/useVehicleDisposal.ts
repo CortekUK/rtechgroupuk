@@ -34,9 +34,9 @@ export function useVehicleDisposal(vehicleId: string) {
       
       const gainLoss = data?.gain_loss || 0;
       const message = gainLoss > 0
-        ? `Vehicle disposed with gain of $${gainLoss}`
+        ? `Vehicle disposed with gain of £${gainLoss}`
         : gainLoss < 0
-        ? `Vehicle disposed with loss of $${Math.abs(gainLoss)}`
+        ? `Vehicle disposed with loss of £${Math.abs(gainLoss)}`
         : 'Vehicle disposed at break-even';
       
       toast({
