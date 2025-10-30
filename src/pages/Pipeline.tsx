@@ -379,15 +379,16 @@ const Pipeline = () => {
                       <TableCell>
                         {lead.status && (
                           <Badge
-                            className={`${statusColors[lead.status] || 'bg-gray-500'} text-white border-0 hover:opacity-90 transition-opacity cursor-default`}
+                            className={`${statusColors[lead.status] || 'bg-gray-500'} text-white border-0 hover:opacity-90 transition-opacity cursor-default whitespace-nowrap`}
                             style={{
                               backgroundColor: lead.status === 'New' ? '#3b82f6' :
                                              lead.status === 'In Progress' ? '#f59e0b' :
                                              lead.status === 'Completed' ? '#10b981' :
-                                             lead.status === 'Declined' ? '#ef4444' : '#6b7280'
+                                             lead.status === 'Declined' ? '#ef4444' : '#6b7280',
+                              whiteSpace: 'nowrap'
                             }}
                           >
-                            {String(lead.status)}
+                            {String(lead.status).replace(/\s+/g, '\u00A0')}
                           </Badge>
                         )}
                       </TableCell>
@@ -413,7 +414,7 @@ const Pipeline = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2 items-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end gap-2 items-center flex-nowrap" onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={lead.status}
                             onValueChange={(value) => {
@@ -423,7 +424,7 @@ const Pipeline = () => {
                             }}
                             disabled={updatingLeadId === lead.id}
                           >
-                            <SelectTrigger className="w-32 h-8" onClick={(e) => e.stopPropagation()}>
+                            <SelectTrigger className="h-8 w-40 min-w-[10rem]" onClick={(e) => e.stopPropagation()}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent onClick={(e) => e.stopPropagation()}>
