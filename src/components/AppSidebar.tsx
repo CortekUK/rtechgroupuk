@@ -1,9 +1,9 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { 
-  Car, 
-  Users, 
-  FileText, 
-  CreditCard, 
+import {
+  Car,
+  Users,
+  FileText,
+  CreditCard,
   LayoutDashboard,
   Bell,
   BarChart3,
@@ -11,7 +11,8 @@ import {
   Bookmark,
   TrendingUp,
   Settings,
-  Shield
+  Shield,
+  Target
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,12 +46,13 @@ export function AppSidebar() {
 
   // Operations navigation items
   const operationsNavigation = [
+    { name: "Pipeline", href: "/pipeline", icon: Target },
     { name: "Insurance", href: "/insurance", icon: Shield },
     { name: "Plates", href: "/plates", icon: Bookmark },
     { name: "P&L Dashboard", href: "/pl-dashboard", icon: TrendingUp },
-    { 
-      name: "Reminders", 
-      href: "/reminders", 
+    {
+      name: "Reminders",
+      href: "/reminders",
       icon: Bell,
       badge: reminderStats?.due || 0
     },

@@ -4,7 +4,8 @@
       "Bash(npx supabase db push:*)",
       "Bash(grep -n \"$$\" components/RentalPaymentRow.tsx)",
       "Bash(grep -n \"$$\" components/EnhancedVehiclePlatesPanel.tsx)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Read(//c/Users/user/Desktop/rtechgroupusa/**)"
     ],
     "deny": [],
     "ask": []

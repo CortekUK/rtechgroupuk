@@ -57,7 +57,7 @@ export const useOrgSettings = () => {
           throw new Error('No settings data received');
         }
 
-        console.log('Settings loaded successfully:', data);
+        // console.log('Settings loaded successfully:', data);
         return data;
       } catch (err) {
         console.error('Settings fetch failed:', err);
