@@ -46,7 +46,6 @@ export function AppSidebar() {
 
   // Operations navigation items
   const operationsNavigation = [
-    { name: "Pipeline", href: "/pipeline", icon: Target },
     { name: "Insurance", href: "/insurance", icon: Shield },
     { name: "Plates", href: "/plates", icon: Bookmark },
     { name: "P&L Dashboard", href: "/pl-dashboard", icon: TrendingUp },
