@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, FileText, Save, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, FileText, Save, AlertTriangle, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerActiveRentals } from "@/hooks/useCustomerActiveRentals";
@@ -43,6 +44,9 @@ const CreateRental = () => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string>("");
+  const [showDocuSignDialog, setShowDocuSignDialog] = useState(false);
+  const [createdRental, setCreatedRental] = useState<any>(null);
+  const [sendingDocuSign, setSendingDocuSign] = useState(false);
 
   const today = new Date();
   const todayAtMidnight = startOfDay(today);
@@ -188,47 +192,26 @@ const CreateRental = () => {
       const customerName = selectedCustomer?.name || "Customer";
       const vehicleReg = selectedVehicle?.reg || "Vehicle";
 
-      // Create DocuSign envelope for rental agreement
-      console.log('Creating DocuSign envelope for rental:', rental.id);
-      try {
-        const { data: envelopeResult, error: envelopeError } = await supabase.functions.invoke('create-docusign-envelope', {
-          body: { rentalId: rental.id }
-        });
+      // Show success toast
+      toast({
+        title: "Rental Created Successfully",
+        description: `Rental created for ${customerName} • ${vehicleReg}`,
+      });
 
-        if (envelopeError) {
-          console.error('DocuSign envelope creation error:', envelopeError);
-          toast({
-            title: "Rental Created (Document Signing Pending)",
-            description: `Rental created for ${customerName} • ${vehicleReg}. Document signing setup encountered an issue.`,
-            variant: "default",
-          });
-        } else if (envelopeResult && envelopeResult.ok) {
-          console.log('DocuSign envelope created:', envelopeResult.envelopeId);
-          toast({
-            title: "Rental Created & Agreement Sent",
-            description: `Rental created for ${customerName} • ${vehicleReg}. Rental agreement sent to ${selectedCustomer?.email} for signature.`,
-          });
-        } else {
-          console.error('DocuSign envelope creation failed:', envelopeResult);
-          toast({
-            title: "Rental Created",
-            description: `Rental created for ${customerName} • ${vehicleReg}`,
-          });
-        }
-      } catch (envelopeException) {
-        console.error('Exception creating DocuSign envelope:', envelopeException);
-        toast({
-          title: "Rental Created",
-          description: `Rental created for ${customerName} • ${vehicleReg}`,
-        });
-      }
-
-      // Refresh queries and navigate
+      // Refresh queries
       queryClient.invalidateQueries({ queryKey: ["rentals-list"] });
       queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
       queryClient.invalidateQueries({ queryKey: ["customer-rentals"] });
       queryClient.invalidateQueries({ queryKey: ["customer-net-position"] });
-      navigate(`/rentals/${rental.id}`);
+
+      // Store rental info and show DocuSign dialog
+      setCreatedRental({
+        id: rental.id,
+        customerName,
+        customerEmail: selectedCustomer?.email,
+        vehicleReg
+      });
+      setShowDocuSignDialog(true);
     } catch (error: any) {
       console.error("Error creating rental:", error);
       
@@ -256,10 +239,67 @@ const CreateRental = () => {
     }
   };
 
+  // Handle DocuSign sending
+  const handleSendDocuSign = async () => {
+    if (!createdRental) return;
+
+    setSendingDocuSign(true);
+    try {
+      console.log('Creating DocuSign envelope for rental:', createdRental.id);
+      const { data: envelopeResult, error: envelopeError } = await supabase.functions.invoke('create-docusign-envelope', {
+        body: { rentalId: createdRental.id }
+      });
+
+      if (envelopeError) {
+        console.error('DocuSign envelope creation error:', envelopeError);
+        toast({
+          title: "Failed to Send Agreement",
+          description: "Could not send the rental agreement for signing. You can try again from the rental detail page.",
+          variant: "destructive",
+        });
+      } else if (envelopeResult && envelopeResult.ok) {
+        console.log('DocuSign envelope created:', envelopeResult.envelopeId);
+        toast({
+          title: "Agreement Sent Successfully",
+          description: `Rental agreement sent to ${createdRental.customerEmail} for signature.`,
+        });
+      } else {
+        console.error('DocuSign envelope creation failed:', envelopeResult);
+        toast({
+          title: "Failed to Send Agreement",
+          description: envelopeResult?.error || "Unknown error occurred",
+          variant: "destructive",
+        });
+      }
+    } catch (envelopeException) {
+      console.error('Exception creating DocuSign envelope:', envelopeException);
+      toast({
+        title: "Failed to Send Agreement",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingDocuSign(false);
+      setShowDocuSignDialog(false);
+      // Navigate to rental detail page
+      if (createdRental?.id) {
+        navigate(`/rentals/${createdRental.id}`);
+      }
+    }
+  };
+
+  const handleSkipDocuSign = () => {
+    setShowDocuSignDialog(false);
+    // Navigate to rental detail page
+    if (createdRental?.id) {
+      navigate(`/rentals/${createdRental.id}`);
+    }
+  };
+
   // Form validation state
   const isFormValid = form.formState.isValid;
   const yearAgo = subYears(new Date(), 1);
-  
+
   // Check if start date is in the past
   const isPastStartDate = watchedValues.start_date && isBefore(watchedValues.start_date, todayAtMidnight);
 
@@ -508,6 +548,51 @@ const CreateRental = () => {
           />
         </div>
       </div>
+
+      {/* DocuSign Send Dialog */}
+      <Dialog open={showDocuSignDialog} onOpenChange={setShowDocuSignDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              Send Rental Agreement for Signature?
+            </DialogTitle>
+            <DialogDescription>
+              Would you like to send the rental agreement to {createdRental?.customerEmail} for electronic signature via DocuSign?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-4">
+            <p className="text-sm text-muted-foreground">
+              <strong>Customer:</strong> {createdRental?.customerName}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <strong>Vehicle:</strong> {createdRental?.vehicleReg}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <strong>Email:</strong> {createdRental?.customerEmail}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleSkipDocuSign}
+              disabled={sendingDocuSign}
+            >
+              No, Skip for Now
+            </Button>
+            <Button
+              onClick={handleSendDocuSign}
+              disabled={sendingDocuSign}
+              className="bg-gradient-primary"
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              {sendingDocuSign ? "Sending..." : "Yes, Send Agreement"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

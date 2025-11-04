@@ -22,69 +22,292 @@ interface CreateEnvelopeResponse {
 
 // Generate rental agreement document content
 function generateRentalAgreementPDF(rental: any, customer: any, vehicle: any): string {
-  const agreementText = `
-RENTAL AGREEMENT
+  const startDate = new Date(rental.start_date).toLocaleDateString('en-GB');
+  const endDate = new Date(rental.end_date).toLocaleDateString('en-GB');
 
-Agreement Date: ${new Date().toLocaleDateString('en-GB')}
-Agreement Reference: ${rental.id}
+  // Dynamic values from database with proper fallbacks
+  const monthlyPayment = Number(rental.monthly_payment) || 0;
+  const initialPayment = Number(rental.initial_payment) || 0;
+  const durationMonths = Number(rental.duration_months) || 12;
 
-===============================================================================
+  // Hardcoded values (not in database)
+  const deposit = 0;
+  const deliveryCharge = 0;
 
-LANDLORD:
-RTech Group UK
-[Company Address]
-[Company Contact Details]
+  // Format monthly amount for display
+  const monthlyAmount = monthlyPayment.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-CUSTOMER:
-Name: ${customer.name}
-Email: ${customer.email}
-Phone: ${customer.phone}
-Type: ${customer.customer_type || customer.type}
+  // Calculate total charge
+  const totalCharge = (monthlyPayment * durationMonths) + deposit + initialPayment + deliveryCharge;
 
-===============================================================================
+  const agreementHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      margin: 40px;
+      color: #000;
+    }
+    h1 {
+      text-align: center;
+      font-size: 16pt;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-size: 13pt;
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      text-decoration: underline;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    table, th, td {
+      border: 1px solid #000;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    .signature-section {
+      margin-top: 40px;
+      margin-bottom: 60px;
+    }
+    .signature-line {
+      margin-top: 60px;
+      border-top: 1px solid #000;
+      width: 300px;
+      display: inline-block;
+    }
+    .terms-section {
+      margin-top: 30px;
+      page-break-before: always;
+    }
+    .terms-section h3 {
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    .terms-section p, .terms-section li {
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+    .checkbox {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      border: 1px solid #000;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
 
-VEHICLE DETAILS:
-License Plate Number: ${vehicle.reg}
-Make: ${vehicle.make}
-Model: ${vehicle.model}
+<h1>RTech Group Car Hire Agreement</h1>
 
-===============================================================================
+<h2>PARTIES TO AGREEMENT</h2>
+<p><strong>Company:</strong> RTech Group</p>
+<p><strong>Customer:</strong> ${customer.name}</p>
 
-RENTAL TERMS:
-Start Date: ${new Date(rental.start_date).toLocaleDateString('en-GB')}
-End Date: ${new Date(rental.end_date).toLocaleDateString('en-GB')}
-Monthly Rental Amount: GBP ${rental.monthly_amount.toLocaleString()}
+<h2>KEY FINANCIAL INFORMATION</h2>
+<table>
+  <tr>
+    <th>Make</th>
+    <th>Model</th>
+    <th>Variant</th>
+    <th>Reg</th>
+    <th>Start Date</th>
+    <th>End Date</th>
+  </tr>
+  <tr>
+    <td>${vehicle.make}</td>
+    <td>${vehicle.model}</td>
+    <td>${vehicle.colour || '-'}</td>
+    <td>${vehicle.reg}</td>
+    <td>${startDate}</td>
+    <td>${endDate}</td>
+  </tr>
+</table>
 
-===============================================================================
+<table>
+  <tr>
+    <th>Deposit</th>
+    <th>Initial Payment</th>
+    <th>Monthly Hire</th>
+    <th>Delivery Charge</th>
+    <th>Total Charge</th>
+  </tr>
+  <tr>
+    <td>£${deposit.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+    <td>£${initialPayment.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+    <td>£${monthlyAmount}</td>
+    <td>£${deliveryCharge.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+    <td>£${totalCharge.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+  </tr>
+</table>
 
-TERMS AND CONDITIONS:
+<p><strong>Maintenance:</strong> <span class="checkbox"></span> Included <span class="checkbox"></span> Not Included</p>
 
-1. The Customer agrees to rent the above-described vehicle from RTech Group UK.
-2. The Customer shall pay the specified monthly rental amount on time.
-3. The Customer agrees to maintain the vehicle in good condition.
-4. The Customer is responsible for any damage to the vehicle during the rental period.
-5. This agreement is subject to the full terms and conditions of RTech Group UK.
+<h2>KEY INFORMATION</h2>
+<p><strong>Overdue rentals:</strong> If a rental goes overdue past the 14 day grace period, the vehicle becomes the property of RTech Group and we will pursue repossession.</p>
+<p><strong>Excess mileage:</strong> If vehicle goes over 1500 miles a month, you will be charged 25p per additional mile.</p>
 
-===============================================================================
+<h2>VEHICLE MILEAGE</h2>
+<p><strong>Max Monthly Mileage:</strong> 1500 miles</p>
+<p><strong>Total Mileage Allowed:</strong> 18000 miles</p>
 
-SIGNATURES:
+<h2>BANK DETAILS</h2>
+<table>
+  <tr>
+    <th>Account Name</th>
+    <td>RTech Group</td>
+  </tr>
+  <tr>
+    <th>Bank Name</th>
+    <td>LLOYDS BANK</td>
+  </tr>
+  <tr>
+    <th>Sort Code</th>
+    <td>30-99-50</td>
+  </tr>
+  <tr>
+    <th>Account Number</th>
+    <td>54738663</td>
+  </tr>
+</table>
 
-By signing below, both parties acknowledge and agree to all terms of this agreement.
+<h2>COMPANY INFORMATION</h2>
+<table>
+  <tr>
+    <th>Company Name</th>
+    <td>RTech Group</td>
+  </tr>
+  <tr>
+    <th>Trading As</th>
+    <td>RTech Group UK Vehicle Hire</td>
+  </tr>
+  <tr>
+    <th>Company Number</th>
+    <td>15704893</td>
+  </tr>
+  <tr>
+    <th>Address</th>
+    <td>68 DAISY BANK ROAD, MANCHESTER, M14 5QP</td>
+  </tr>
+  <tr>
+    <th>Contact Person</th>
+    <td>SERVAK SINGH</td>
+  </tr>
+  <tr>
+    <th>Contact Phone</th>
+    <td>07487568568</td>
+  </tr>
+  <tr>
+    <th>Contact Email</th>
+    <td>info@rtechgroup.co.uk</td>
+  </tr>
+</table>
 
+<h2>VEHICLE DAMAGE</h2>
+<p><strong>Comments:</strong> NONE</p>
 
-Customer Signature: _________________________    Date: ______________
+<div class="signature-section">
+  <h2>SIGNATURES</h2>
+  <p>By signing below, both parties acknowledge and agree to all terms of this agreement.</p>
 
+  <div style="margin-top: 40px;">
+    <p><strong>Hirer Signature:</strong></p>
+    <div class="signature-line"></div>
+    <p style="margin-top: 5px;">Date: ______________</p>
+  </div>
 
-Landlord Signature: _________________________    Date: ______________
+  <div style="margin-top: 60px;">
+    <p><strong>Lessor Signature (RTech Group):</strong></p>
+    <div class="signature-line"></div>
+    <p style="margin-top: 5px;">Date: ______________</p>
+  </div>
+</div>
 
+<div class="terms-section">
+  <h1>TERMS AND CONDITIONS</h1>
 
-===============================================================================
+  <h3>1. DEFINITIONS</h3>
+  <p>In this Agreement the following terms shall have the following meanings:</p>
+  <ul>
+    <li><strong>"Vehicle"</strong> means the motor vehicle described in the Key Financial Information section of this Agreement;</li>
+    <li><strong>"Hirer"</strong> means the person(s) named as the Customer in this Agreement;</li>
+    <li><strong>"Lessor"</strong> means RTech Group;</li>
+    <li><strong>"Monthly Hire"</strong> means the monthly rental payment specified in this Agreement;</li>
+    <li><strong>"Deposit"</strong> means the security deposit paid by the Hirer;</li>
+  </ul>
 
-RTech Group UK - Rental Agreement
-Generated: ${new Date().toISOString()}
+  <h3>2. TERM OF AGREEMENT</h3>
+  <p>This Agreement shall commence on the Start Date and continue until the End Date as specified in the Key Financial Information section, unless terminated earlier in accordance with the provisions of this Agreement.</p>
+
+  <h3>3. PAYMENT TERMS</h3>
+  <p>3.1 The Hirer agrees to pay the Monthly Hire amount on or before the first day of each month.</p>
+  <p>3.2 Payment shall be made by bank transfer to the account details specified in this Agreement.</p>
+  <p>3.3 Late payments may incur additional charges and interest at a rate of 8% per annum above the Bank of England base rate.</p>
+  <p>3.4 If payment is not received within 14 days of the due date, the Lessor reserves the right to repossess the Vehicle.</p>
+
+  <h3>4. USE OF VEHICLE</h3>
+  <p>4.1 The Vehicle shall be used solely for private purposes unless otherwise agreed in writing.</p>
+  <p>4.2 The Hirer shall not use the Vehicle for any illegal purpose or in any manner that breaches any applicable laws or regulations.</p>
+  <p>4.3 The Hirer shall not sub-let or allow any unauthorized person to use the Vehicle.</p>
+  <p>4.4 The Vehicle must not be driven outside of the United Kingdom without prior written consent from the Lessor.</p>
+
+  <h3>5. MILEAGE</h3>
+  <p>5.1 The maximum monthly mileage allowance is 1,500 miles.</p>
+  <p>5.2 Excess mileage will be charged at 25 pence per mile.</p>
+  <p>5.3 The Hirer must provide accurate mileage readings when requested by the Lessor.</p>
+
+  <h3>6. MAINTENANCE AND REPAIRS</h3>
+  <p>6.1 If maintenance is included, the Lessor will be responsible for all routine servicing and maintenance.</p>
+  <p>6.2 The Hirer must report any faults or damage to the Vehicle immediately to the Lessor.</p>
+  <p>6.3 The Hirer must not carry out any repairs or modifications to the Vehicle without prior written consent.</p>
+  <p>6.4 The Hirer is responsible for daily checks including oil, water, and tire pressures.</p>
+
+  <h3>7. INSURANCE</h3>
+  <p>7.1 The Lessor will maintain comprehensive insurance on the Vehicle.</p>
+  <p>7.2 The Hirer must notify the Lessor immediately of any accident or damage.</p>
+  <p>7.3 The Hirer may be liable for any insurance excess in the event of a claim.</p>
+
+  <h3>8. TERMINATION</h3>
+  <p>8.1 Either party may terminate this Agreement by giving 30 days' written notice.</p>
+  <p>8.2 The Lessor may terminate this Agreement immediately if the Hirer breaches any terms.</p>
+  <p>8.3 Upon termination, the Hirer must return the Vehicle in good condition, fair wear and tear excepted.</p>
+  <p>8.4 If rental payments become 14 days overdue, the Vehicle becomes the property of RTech Group and repossession will be pursued.</p>
+
+  <h3>9. GENERAL</h3>
+  <p>9.1 This Agreement constitutes the entire agreement between the parties.</p>
+  <p>9.2 Any amendments must be made in writing and signed by both parties.</p>
+  <p>9.3 This Agreement shall be governed by the laws of England and Wales.</p>
+  <p>9.4 The Hirer confirms they have read, understood, and agree to all terms and conditions set out in this Agreement.</p>
+</div>
+
+<p style="text-align: center; margin-top: 40px; font-size: 9pt; color: #666;">
+  RTech Group Car Hire Agreement | Generated: ${new Date().toLocaleDateString('en-GB')}
+</p>
+
+</body>
+</html>
 `;
 
-  return btoa(agreementText);
+  return btoa(unescape(encodeURIComponent(agreementHtml)));
 }
 
 // Helper function to convert PKCS#1 to PKCS#8 format
@@ -269,12 +492,12 @@ async function createAndSendEnvelope(
     console.log('Creating DocuSign envelope...');
 
     const envelopeDefinition = {
-      emailSubject: `Rental Agreement - ${vehicle.reg} - Please Sign`,
+      emailSubject: `RTech Group Car Hire Agreement - ${vehicle.reg} - Please Sign`,
       documents: [
         {
           documentBase64: documentBase64,
-          name: `Rental_Agreement_${vehicle.reg}_${rental.id.substring(0, 8)}.txt`,
-          fileExtension: 'txt',
+          name: `RTech_Group_Car_Hire_Agreement_${vehicle.reg}_${rental.id.substring(0, 8)}.html`,
+          fileExtension: 'html',
           documentId: '1'
         }
       ],
@@ -288,18 +511,19 @@ async function createAndSendEnvelope(
             tabs: {
               signHereTabs: [
                 {
-                  anchorString: 'Customer Signature:',
+                  anchorString: 'Hirer Signature:',
                   anchorUnits: 'pixels',
-                  anchorXOffset: '150',
-                  anchorYOffset: '-5'
+                  anchorXOffset: '0',
+                  anchorYOffset: '25'
                 }
               ],
               dateSignedTabs: [
                 {
-                  anchorString: 'Date:',
+                  anchorString: 'Hirer Signature:',
                   anchorUnits: 'pixels',
-                  anchorXOffset: '50',
-                  anchorYOffset: '-5'
+                  anchorXOffset: '0',
+                  anchorYOffset: '80',
+                  anchorIgnoreIfNotPresent: false
                 }
               ]
             }
@@ -348,7 +572,7 @@ async function createDocuSignEnvelope(supabase: any, rentalId: string): Promise<
       .select(`
         *,
         customers:customer_id (id, name, email, phone, customer_type, type),
-        vehicles:vehicle_id (id, reg, make, model)
+        vehicles:vehicle_id (id, reg, make, model, colour)
       `)
       .eq('id', rentalId)
       .single();
