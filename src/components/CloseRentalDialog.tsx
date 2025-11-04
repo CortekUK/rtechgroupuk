@@ -175,8 +175,13 @@ export const CloseRentalDialog = ({ open, onOpenChange, rental }: CloseRentalDia
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
-                            fromDate={new Date(rental.start_date)}
-                            toDate={new Date()}
+                            disabled={(date) => {
+                              const startDate = new Date(rental.start_date);
+                              const today = new Date();
+                              startDate.setHours(0, 0, 0, 0);
+                              today.setHours(23, 59, 59, 999);
+                              return date < startDate || date > today;
+                            }}
                             initialFocus
                           />
                         </PopoverContent>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Car, FileText, PoundSterling, Wrench, Calendar, TrendingUp, TrendingDown, Plus, Shield, Clock, Trash2, History, Receipt, Users, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, Car, FileText, PoundSterling, Wrench, Calendar, TrendingUp, TrendingDown, Plus, Shield, Clock, Trash2, Receipt, Users, Eye, EyeOff } from "lucide-react";
 import { getContractTotal } from "@/lib/vehicleUtils";
 import { format } from "date-fns";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
@@ -23,7 +23,6 @@ import { TruncatedCell } from "@/components/TruncatedCell";
 import { useVehicleServices } from "@/hooks/useVehicleServices";
 import { useVehicleExpenses } from "@/hooks/useVehicleExpenses";
 import { useVehicleFiles } from "@/hooks/useVehicleFiles";
-import { useVehicleEvents } from "@/hooks/useVehicleEvents";
 import { AddServiceRecordDialog } from "@/components/AddServiceRecordDialog";
 import { ServiceHistoryTable } from "@/components/ServiceHistoryTable";
 import { LastServiceCard } from "@/components/LastServiceCard";
@@ -162,7 +161,7 @@ export default function VehicleDetail() {
     isDeleting: isDeletingExpense,
   } = useVehicleExpenses(id!);
 
-  // Files management hook  
+  // Files management hook
   const {
     files,
     isLoading: isLoadingFiles,
@@ -172,12 +171,6 @@ export default function VehicleDetail() {
     isUploading: isUploadingFile,
     isDeleting: isDeletingFile,
   } = useVehicleFiles(id!);
-
-  // Events/history hook
-  const {
-    events,
-    isLoading: isLoadingEvents,
-  } = useVehicleEvents(id!);
 
   // Fetch vehicle details
   const { data: vehicle, isLoading: vehicleLoading } = useQuery({
@@ -406,7 +399,6 @@ export default function VehicleDetail() {
       }} className="w-full">
         <TabsList variant="sticky-evenly-spaced" className="mb-6">
           <TabsTrigger variant="evenly-spaced" value="overview">Overview</TabsTrigger>
-          <TabsTrigger variant="evenly-spaced" value="history">History</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="expenses">Expenses</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="rentals">Rentals</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="fines">Fines</TabsTrigger>
@@ -1071,54 +1063,6 @@ export default function VehicleDetail() {
 
         <TabsContent value="plates" className="mt-6">
           <EnhancedVehiclePlatesPanel vehicleId={id!} vehicleReg={vehicle.reg} />
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Vehicle History
-              </CardTitle>
-              <CardDescription>
-                Timeline of events and activities for this vehicle
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingEvents ? (
-                <div className="text-center py-8 text-muted-foreground">Loading events...</div>
-              ) : events.length > 0 ? (
-                <div className="space-y-3">
-                  {events.map((event) => (
-                    <div key={event.id} className="flex gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                      <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2"></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start gap-4">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm">
-                              <TruncatedCell content={event.summary} maxLength={50} />
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {format(new Date(event.event_date), "MMM d, yyyy 'at' HH:mm")}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="flex-shrink-0 text-xs">
-                            {event.event_type.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={History}
-                  title="No events recorded yet"
-                  description="Uploads, plate changes, rentals, services will appear here as they occur"
-                />
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="expenses" className="space-y-4">

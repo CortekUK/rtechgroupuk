@@ -14,9 +14,11 @@ import { useRentalTotals } from "@/hooks/useRentalLedgerData";
 import { useRentalInitialFee } from "@/hooks/useRentalInitialFee";
 import { RentalLedger } from "@/components/RentalLedger";
 import { ComplianceStatusPanel } from "@/components/ComplianceStatusPanel";
+import { CloseRentalDialog } from "@/components/CloseRentalDialog";
 
 interface Rental {
   id: string;
+  rental_number: string;
   start_date: string;
   end_date: string;
   monthly_amount: number;
@@ -31,6 +33,7 @@ const RentalDetail = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAddPayment, setShowAddPayment] = useState(false);
+  const [showCloseRental, setShowCloseRental] = useState(false);
 
   const { data: rental, isLoading } = useQuery({
     queryKey: ["rental", id],
@@ -71,7 +74,7 @@ const RentalDetail = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center pt-[24px] justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => navigate("/rentals")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -89,40 +92,15 @@ const RentalDetail = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add Payment
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={async () => {
-              try {
-                await supabase
-                  .from("rentals")
-                  .update({ status: "Closed" })
-                  .eq("id", id);
-                
-                await supabase
-                  .from("vehicles")
-                  .update({ status: "Available" })
-                  .eq("id", rental.vehicles?.id);
-                
-                toast({
-                  title: "Rental Closed",
-                  description: "Rental has been closed and vehicle is now available.",
-                });
-                
-                queryClient.invalidateQueries({ queryKey: ["rental", id] });
-                queryClient.invalidateQueries({ queryKey: ["rentals-list"] });
-                queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
-              } catch (error) {
-                toast({
-                  title: "Error",
-                  description: "Failed to close rental.",
-                  variant: "destructive",
-                });
-              }
-            }}
-          >
-            <X className="h-4 w-4 mr-2" />
-            Close Rental
-          </Button>
+          {rental.status !== 'Closed' && (
+            <Button
+              variant="outline"
+              onClick={() => setShowCloseRental(true)}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Close Rental
+            </Button>
+          )}
         </div>
       </div>
 
@@ -235,6 +213,30 @@ const RentalDetail = () => {
           onOpenChange={setShowAddPayment}
           customer_id={rental.customers?.id}
           vehicle_id={rental.vehicles?.id}
+        />
+      )}
+
+      {/* Close Rental Dialog */}
+      {rental && (
+        <CloseRentalDialog
+          open={showCloseRental}
+          onOpenChange={setShowCloseRental}
+          rental={{
+            id: rental.id,
+            rental_number: rental.rental_number,
+            customer: {
+              id: rental.customers.id,
+              name: rental.customers.name,
+            },
+            vehicle: {
+              id: rental.vehicles.id,
+              reg: rental.vehicles.reg,
+              make: rental.vehicles.make,
+              model: rental.vehicles.model,
+            },
+            start_date: rental.start_date,
+            monthly_amount: rental.monthly_amount,
+          }}
         />
       )}
     </div>
