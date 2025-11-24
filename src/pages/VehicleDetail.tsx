@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { AddFineDialog } from "@/components/AddFineDialog";
 
 interface Vehicle {
   id: string;
@@ -119,8 +120,10 @@ export default function VehicleDetail() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showGhostCode, setShowGhostCode] = useState(false);
-  
+  const [addFineDialogOpen, setAddFineDialogOpen] = useState(false);
+
   // Get tab and date filtering from URL params
   const activeTab = searchParams.get('tab') || 'overview';
   const monthParam = searchParams.get('month');
@@ -401,7 +404,9 @@ export default function VehicleDetail() {
           <TabsTrigger variant="evenly-spaced" value="overview">Overview</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="expenses">Expenses</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="rentals">Rentals</TabsTrigger>
-          <TabsTrigger variant="evenly-spaced" value="fines">Fines</TabsTrigger>
+          {rentals?.some(r => r.status === 'Active') && (
+            <TabsTrigger variant="evenly-spaced" value="fines">Fines</TabsTrigger>
+          )}
           <TabsTrigger variant="evenly-spaced" value="services">Services</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="plates">Plates</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="pl">P&L</TabsTrigger>
@@ -434,6 +439,7 @@ export default function VehicleDetail() {
                 <MetricItem label="Model" value={vehicle.model} />
                 {vehicle.year && <MetricItem label="Year" value={vehicle.year} />}
                 <MetricItem label="Color" value={vehicle.colour} />
+                {vehicle.fuel_type && <MetricItem label="Fuel Type" value={vehicle.fuel_type} />}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Status:</span>
                   <VehicleStatusBadge status={vehicle.status} showTooltip />
@@ -452,7 +458,35 @@ export default function VehicleDetail() {
                   isAmount
                 />
                 <MetricItem label="Acquired" value={format(new Date(vehicle.acquisition_date), "dd/MM/yyyy")} />
-                
+
+                {/* Rental Rates */}
+                {(vehicle.daily_rate || vehicle.weekly_rate || vehicle.monthly_rate) && (
+                  <>
+                    <MetricDivider />
+                    <div className="text-xs font-medium text-muted-foreground">Rental Rates</div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      {vehicle.daily_rate && (
+                        <div>
+                          <span className="text-muted-foreground">Daily:</span>
+                          <span className="ml-1 font-medium">£{vehicle.daily_rate}</span>
+                        </div>
+                      )}
+                      {vehicle.weekly_rate && (
+                        <div>
+                          <span className="text-muted-foreground">Weekly:</span>
+                          <span className="ml-1 font-medium">£{vehicle.weekly_rate}</span>
+                        </div>
+                      )}
+                      {vehicle.monthly_rate && (
+                        <div>
+                          <span className="text-muted-foreground">Monthly:</span>
+                          <span className="ml-1 font-medium">£{vehicle.monthly_rate}</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
                 {/* Compliance Status */}
                 <MetricDivider />
                 <div className="space-y-3">
@@ -979,9 +1013,15 @@ export default function VehicleDetail() {
 
         <TabsContent value="fines" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Fine History</CardTitle>
-              <CardDescription>All fines associated with this vehicle</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Fine History</CardTitle>
+                <CardDescription>All fines associated with this vehicle</CardDescription>
+              </div>
+              <Button onClick={() => setAddFineDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Fine
+              </Button>
             </CardHeader>
             <CardContent>
               {fines && fines.length > 0 ? (
@@ -1181,6 +1221,15 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Add Fine Dialog */}
+      <AddFineDialog
+        open={addFineDialogOpen}
+        onOpenChange={setAddFineDialogOpen}
+        preSelectedVehicleId={id}
+        preSelectedCustomerId={rentals?.find(r => r.status === 'Active')?.customer_id}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["vehicle-fines", id] })}
+      />
     </div>
   );
 }

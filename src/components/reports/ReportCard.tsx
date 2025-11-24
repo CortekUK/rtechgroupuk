@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { LucideIcon, Download, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,8 @@ interface ReportCardProps {
   subtitle: string;
   metadata?: string;
   onClick: () => void;
-  onExport?: (format: 'csv' | 'xlsx' | 'pdf') => void;
+  onExport?: () => void;
+  isExporting?: boolean;
 }
 
 export const ReportCard: React.FC<ReportCardProps> = ({
@@ -26,11 +27,12 @@ export const ReportCard: React.FC<ReportCardProps> = ({
   subtitle,
   metadata,
   onClick,
-  onExport
+  onExport,
+  isExporting = false
 }) => {
-  const handleExportClick = (e: React.MouseEvent, format: 'csv' | 'xlsx' | 'pdf') => {
+  const handleExportClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onExport?.(format);
+    onExport?.();
   };
 
   return (
@@ -69,37 +71,22 @@ export const ReportCard: React.FC<ReportCardProps> = ({
           {description}
         </CardDescription>
         
-        {/* Export Icons - Bottom Right */}
+        {/* Export Icon - Bottom Right */}
         <div className="absolute bottom-3 right-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="sm"
             className="h-6 w-6 p-0 hover:bg-primary/10"
-            onClick={(e) => handleExportClick(e, 'csv')}
-            title="Export CSV"
+            onClick={handleExportClick}
+            disabled={isExporting}
+            title="Download Report"
           >
-            <Download className="h-3 w-3" />
+            {isExporting ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Download className="h-3 w-3" />
+            )}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-primary/10"
-            onClick={(e) => handleExportClick(e, 'xlsx')}
-            title="Export XLSX"
-          >
-            <FileSpreadsheet className="h-3 w-3" />
-          </Button>
-          {id === 'customer-statements' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 hover:bg-primary/10"
-              onClick={(e) => handleExportClick(e, 'pdf')}
-              title="Export PDF"
-            >
-              <FileText className="h-3 w-3" />
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>

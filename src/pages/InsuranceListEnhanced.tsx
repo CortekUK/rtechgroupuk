@@ -280,7 +280,7 @@ export default function InsuranceListEnhanced() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("customer")}
                     >
                       Customer
@@ -290,7 +290,7 @@ export default function InsuranceListEnhanced() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("vehicle")}
                     >
                       Vehicle
@@ -300,7 +300,7 @@ export default function InsuranceListEnhanced() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("policy_number")}
                     >
                       Policy Number
@@ -310,7 +310,7 @@ export default function InsuranceListEnhanced() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("provider")}
                     >
                       Provider
@@ -320,7 +320,7 @@ export default function InsuranceListEnhanced() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("start_date")}
                     >
                       Start Date
@@ -330,7 +330,7 @@ export default function InsuranceListEnhanced() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("expiry_date")}
                     >
                       Expiry Date
@@ -340,17 +340,17 @@ export default function InsuranceListEnhanced() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("status")}
                     >
                       Status
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-left">
                     <Button
                       variant="ghost"
-                      className="h-8 p-2 font-medium"
+                      className="h-8 p-0 font-medium"
                       onClick={() => handleSort("docs_count")}
                     >
                       Docs
@@ -446,8 +446,8 @@ export default function InsuranceListEnhanced() {
                           expiryDate={policy.expiry_date}
                         />
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      <TableCell className="text-left">
+                        <div className="flex items-center justify-start gap-1">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{policy.docs_count}</span>
                         </div>

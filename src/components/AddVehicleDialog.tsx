@@ -27,10 +27,33 @@ const vehicleSchema = z.object({
   reg: z.string().min(1, "Registration number is required"),
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
-  year: z.number().min(1900, "Year must be after 1900").max(new Date().getFullYear() + 1, "Year cannot be in the future").optional(),
+  year: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Please enter a valid year" }).min(1900, "Year must be after 1900").max(new Date().getFullYear() + 1, "Year cannot be in the future").optional()
+  ),
   colour: z.string().min(1, "Colour is required"),
-  purchase_price: z.number().min(0, "Price must be positive").optional(),
-  contract_total: z.number().min(0, "Contract total must be positive").optional(),
+  fuel_type: z.enum(['Petrol', 'Diesel', 'Hybrid', 'Electric'], { required_error: "Fuel type is required" }),
+  // Rental rates (required)
+  daily_rate: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number({ required_error: "Daily rate is required", invalid_type_error: "Please enter a valid daily rate" }).min(1, "Daily rate is required")
+  ),
+  weekly_rate: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number({ required_error: "Weekly rate is required", invalid_type_error: "Please enter a valid weekly rate" }).min(1, "Weekly rate is required")
+  ),
+  monthly_rate: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number({ required_error: "Monthly rate is required", invalid_type_error: "Please enter a valid monthly rate" }).min(1, "Monthly rate is required")
+  ),
+  purchase_price: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Please enter a valid purchase price" }).min(0, "Price must be positive").optional()
+  ),
+  contract_total: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Please enter a valid contract total" }).min(0, "Contract total must be positive").optional()
+  ),
   acquisition_date: z.date(),
   acquisition_type: z.enum(['Purchase', 'Finance']),
   // MOT & TAX fields
@@ -47,17 +70,12 @@ const vehicleSchema = z.object({
   spare_key_holder: z.enum(["Company", "Customer"]).optional(),
   spare_key_notes: z.string().optional(),
   // Security fields
-  has_ghost: z.boolean().default(false),
   has_tracker: z.boolean().default(false),
   has_remote_immobiliser: z.boolean().default(false),
-  ghost_code: z.string().optional(),
   security_notes: z.string().optional(),
 }).refine(
   (data) => {
     if (data.acquisition_type === 'Finance' && !data.contract_total) {
-      return false;
-    }
-    if (data.acquisition_type === 'Purchase' && !data.purchase_price) {
       return false;
     }
     return true;
@@ -65,6 +83,17 @@ const vehicleSchema = z.object({
   {
     message: "Contract total is required for financed vehicles",
     path: ["contract_total"],
+  }
+).refine(
+  (data) => {
+    if (data.acquisition_type === 'Purchase' && !data.purchase_price) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Purchase price is required for purchased vehicles",
+    path: ["purchase_price"],
   }
 ).refine((data) => {
   if (data.has_spare_key) {
@@ -97,6 +126,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
       model: "",
       year: undefined,
       colour: "",
+      fuel_type: undefined,
       acquisition_date: new Date(),
       acquisition_type: "Purchase",
       has_logbook: false,
@@ -104,11 +134,12 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
       has_spare_key: false,
       spare_key_holder: undefined,
       spare_key_notes: "",
-      has_ghost: false,
       has_tracker: false,
       has_remote_immobiliser: false,
-      ghost_code: "",
       security_notes: "",
+      daily_rate: undefined,
+      weekly_rate: undefined,
+      monthly_rate: undefined,
     },
   });
 
@@ -135,6 +166,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
         model: data.model,
         year: data.year,
         colour: data.colour,
+        fuel_type: data.fuel_type || null,
         acquisition_type: data.acquisition_type,
         acquisition_date: data.acquisition_date.toISOString().split('T')[0],
         mot_due_date: data.mot_due_date?.toISOString().split('T')[0],
@@ -146,11 +178,12 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
         has_spare_key: data.has_spare_key,
         spare_key_holder: data.has_spare_key ? data.spare_key_holder : null,
         spare_key_notes: data.has_spare_key ? data.spare_key_notes : null,
-        has_ghost: data.has_ghost,
         has_tracker: data.has_tracker,
         has_remote_immobiliser: data.has_remote_immobiliser,
-        ghost_code: data.has_ghost ? data.ghost_code : null,
         security_notes: data.security_notes || null,
+        daily_rate: data.daily_rate || null,
+        weekly_rate: data.weekly_rate || null,
+        monthly_rate: data.monthly_rate || null,
       };
 
       // Add type-specific fields
@@ -317,11 +350,21 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                       <FormItem>
                         <FormLabel>Year</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="e.g. 2020" 
-                            {...field} 
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : "")}
+                          <Input
+                            type="number"
+                            min="1900"
+                            step="1"
+                            placeholder="e.g. 2020"
+                            {...field}
+                            onKeyDown={(e) => {
+                              if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[.\-e]/g, '');
+                              field.onChange(value ? parseInt(value, 10) : "");
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -344,26 +387,161 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                       </FormItem>
                     )}
                   />
-                  
+
+                  {/* Purchase Price - only show for Purchase */}
+                  {form.watch("acquisition_type") === "Purchase" && (
+                    <FormField
+                      control={form.control}
+                      name="purchase_price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Purchase Price (£)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="Enter amount"
+                              {...field}
+                              onKeyDown={(e) => {
+                                if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[.\-e]/g, '');
+                                field.onChange(value ? parseInt(value, 10) : "");
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+
+                <div className="ml-3">
                   <FormField
                     control={form.control}
-                    name="purchase_price"
+                    name="fuel_type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Purchase Price (£)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="Enter amount"
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
-                          />
-                        </FormControl>
+                        <FormLabel>Fuel Type *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select fuel type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Petrol">Petrol</SelectItem>
+                            <SelectItem value="Diesel">Diesel</SelectItem>
+                            <SelectItem value="Hybrid">Hybrid</SelectItem>
+                            <SelectItem value="Electric">Electric</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Rental Rates Section */}
+                <div className="space-y-4 ml-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <PoundSterling className="h-5 w-5 text-primary" />
+                    Rental Rates *
+                  </h3>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="daily_rate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Daily (£) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="0"
+                              value={field.value ?? ""}
+                              onKeyDown={(e) => {
+                                if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[.\-e]/g, '');
+                                field.onChange(value ? parseInt(value, 10) : undefined);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="weekly_rate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Weekly (£) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="0"
+                              value={field.value ?? ""}
+                              onKeyDown={(e) => {
+                                if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[.\-e]/g, '');
+                                field.onChange(value ? parseInt(value, 10) : undefined);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="monthly_rate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Monthly (£) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="0"
+                              value={field.value ?? ""}
+                              onKeyDown={(e) => {
+                                if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[.\-e]/g, '');
+                                field.onChange(value ? parseInt(value, 10) : undefined);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 ml-3">
@@ -566,10 +744,19 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                           <FormControl>
                             <Input
                               type="number"
-                              step="0.01" 
-                              placeholder="Enter contract total" 
-                              {...field} 
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
+                              min="0"
+                              step="1"
+                              placeholder="Enter contract total"
+                              {...field}
+                              onKeyDown={(e) => {
+                                if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[.\-e]/g, '');
+                                field.onChange(value ? parseInt(value, 10) : "");
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -709,50 +896,6 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                   
                   <FormField
                     control={form.control}
-                    name="has_ghost"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Has Ghost Immobiliser</FormLabel>
-                          <div className="text-sm text-muted-foreground">
-                            Vehicle has a Ghost immobiliser system
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Ghost Code - only show if has_ghost is true */}
-                  {form.watch("has_ghost") && (
-                    <div className="ml-3">
-                      <FormField
-                        control={form.control}
-                        name="ghost_code"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ghost Immobilizer Code</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="Enter Ghost code" 
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                           </FormItem>
-                         )}
-                      />
-                    </div>
-                  )}
-
-                  <FormField
-                    control={form.control}
                     name="has_tracker"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -811,6 +954,7 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                       )}
                      />
                 </div>
+
               </div>
             </ScrollArea>
             

@@ -377,9 +377,9 @@ const CustomersList = () => {
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Customer Database
-            <Badge variant="outline" className="ml-2">
+            {/* <Badge variant="outline" className="ml-2">
               {totalCustomers} {totalCustomers === 1 ? 'customer' : 'customers'}
-            </Badge>
+            </Badge> */}
           </CardTitle>
           <CardDescription>
             View and manage all customers with contact information and account balances
@@ -517,12 +517,12 @@ const CustomersList = () => {
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort('balance')}
                     >
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-start justify-start gap-2">
                         Balance
                         <SortIcon field="balance" />
                       </div>
                     </TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-left">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -585,7 +585,7 @@ const CustomersList = () => {
                             {customer.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-left">
                           {balanceData ? (
                             <CustomerBalanceChip 
                               balance={balanceData.balance} 

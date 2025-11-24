@@ -203,7 +203,7 @@ export const FineFilters = ({ onFiltersChange }: FineFiltersProps) => {
                 </div>
               </div>
 
-              {/* Status Filters */}
+              {/* Status Filters
               <div>
                 <Label className="text-base font-medium">Status</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
@@ -220,7 +220,7 @@ export const FineFilters = ({ onFiltersChange }: FineFiltersProps) => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               {/* Liability Filters */}
               <div>

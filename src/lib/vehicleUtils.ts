@@ -37,23 +37,34 @@ export interface VehiclePLData {
 }
 
 /**
- * Compute dynamic vehicle status based on disposal and rental state
+ * Compute dynamic vehicle status based on disposal, rental state, and database status
+ * Now prioritizes the database status field as the source of truth
  */
 export function computeVehicleStatus(
-  vehicle: { id: string; is_disposed: boolean; disposal_date?: string },
+  vehicle: { id: string; is_disposed: boolean; disposal_date?: string; status?: string },
   activeRentals: { vehicle_id: string }[]
 ): VehicleStatus {
-  // Check if disposed
+  // Check if disposed (highest priority)
   if (vehicle.is_disposed || vehicle.disposal_date) {
     return 'Disposed';
   }
-  
-  // Check if actively rented
+
+  // Use database status if it's "Rented" - this is the source of truth
+  if (vehicle.status?.toLowerCase() === 'rented') {
+    return 'Rented';
+  }
+
+  // Check if actively rented from rentals data as secondary check
   const isRented = activeRentals.some(rental => rental.vehicle_id === vehicle.id);
   if (isRented) {
     return 'Rented';
   }
-  
+
+  // Use database status for Available as well
+  if (vehicle.status?.toLowerCase() === 'available') {
+    return 'Available';
+  }
+
   return 'Available';
 }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { X, FileText, Download, FileSpreadsheet } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,8 @@ interface ReportPreviewModalProps {
   reportId: string;
   reportTitle: string;
   filters: ReportFilters;
-  onExport: (format: 'csv' | 'xlsx' | 'pdf') => void;
+  onExport: () => void;
+  isExporting?: boolean;
 }
 
 export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
@@ -25,7 +26,8 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   reportId,
   reportTitle,
   filters,
-  onExport
+  onExport,
+  isExporting = false
 }) => {
   const { data: previewData, isLoading } = useQuery({
     queryKey: ['report-preview', reportId, filters],
@@ -36,56 +38,110 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
       let query;
       
       switch (reportId) {
-        case 'payments':
-          query = supabase
+        case 'payments': {
+          let paymentsQuery = supabase
             .from('view_payments_export')
             .select('*')
             .gte('payment_date', fromDate)
-            .lte('payment_date', toDate)
-            .limit(10);
+            .lte('payment_date', toDate);
+
+          if (filters.customers.length > 0) {
+            paymentsQuery = paymentsQuery.in('customer_id', filters.customers);
+          }
+          if (filters.vehicles.length > 0) {
+            paymentsQuery = paymentsQuery.in('vehicle_id', filters.vehicles);
+          }
+          if (filters.paymentTypes.length > 0) {
+            paymentsQuery = paymentsQuery.in('payment_type', filters.paymentTypes);
+          }
+
+          query = paymentsQuery.limit(10);
           break;
-        
-        case 'pl-report':
-          query = supabase
+        }
+
+        case 'pl-report': {
+          let plQuery = supabase
             .from('view_pl_by_vehicle')
-            .select('*')
-            .limit(10);
+            .select('*');
+
+          if (filters.vehicles.length > 0) {
+            plQuery = plQuery.in('vehicle_id', filters.vehicles);
+          }
+
+          query = plQuery.limit(10);
           break;
-        
-        case 'rentals':
-          query = supabase
+        }
+
+        case 'rentals': {
+          let rentalsQuery = supabase
             .from('view_rentals_export')
             .select('*')
             .gte('start_date', fromDate)
-            .lte('start_date', toDate)
-            .limit(10);
+            .lte('start_date', toDate);
+
+          if (filters.customers.length > 0) {
+            rentalsQuery = rentalsQuery.in('customer_id', filters.customers);
+          }
+          if (filters.vehicles.length > 0) {
+            rentalsQuery = rentalsQuery.in('vehicle_id', filters.vehicles);
+          }
+          if (filters.statuses.length > 0) {
+            rentalsQuery = rentalsQuery.in('status', filters.statuses);
+          }
+
+          query = rentalsQuery.limit(10);
           break;
-        
-        case 'fines':
-          query = supabase
+        }
+
+        case 'fines': {
+          let finesQuery = supabase
             .from('view_fines_export')
             .select('*')
             .gte('issue_date', fromDate)
-            .lte('issue_date', toDate)
-            .limit(10);
+            .lte('issue_date', toDate);
+
+          if (filters.customers.length > 0) {
+            finesQuery = finesQuery.in('customer_id', filters.customers);
+          }
+          if (filters.vehicles.length > 0) {
+            finesQuery = finesQuery.in('vehicle_id', filters.vehicles);
+          }
+          if (filters.statuses.length > 0) {
+            finesQuery = finesQuery.in('status', filters.statuses);
+          }
+
+          query = finesQuery.limit(10);
           break;
-        
-        case 'customer-statements':
-          query = supabase
+        }
+
+        case 'customer-statements': {
+          let statementsQuery = supabase
             .from('view_customer_statements')
             .select('*')
             .gte('entry_date', fromDate)
-            .lte('entry_date', toDate)
-            .limit(10);
+            .lte('entry_date', toDate);
+
+          if (filters.customers.length > 0) {
+            statementsQuery = statementsQuery.in('customer_id', filters.customers);
+          }
+
+          query = statementsQuery.limit(10);
           break;
-        
-        case 'aging':
-          query = supabase
+        }
+
+        case 'aging': {
+          let agingQuery = supabase
             .from('view_aging_receivables')
-            .select('*')
-            .limit(10);
+            .select('*');
+
+          if (filters.customers.length > 0) {
+            agingQuery = agingQuery.in('customer_id', filters.customers);
+          }
+
+          query = agingQuery.limit(10);
           break;
-        
+        }
+
         default:
           return { data: [], count: 0 };
       }
@@ -177,9 +233,6 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>{reportTitle} Preview</span>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -208,34 +261,19 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">Sample Data (First 10 rows)</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onExport('csv')}
-                  >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onExport}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
                     <Download className="h-4 w-4 mr-2" />
-                    CSV
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onExport('xlsx')}
-                  >
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    XLSX
-                  </Button>
-                  {reportId === 'customer-statements' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onExport('pdf')}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      PDF
-                    </Button>
                   )}
-                </div>
+                  {isExporting ? 'Downloading...' : 'Download'}
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="overflow-auto">

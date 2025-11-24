@@ -58,7 +58,7 @@ const ReminderRuleCard: React.FC<{
           <div className="flex items-center gap-2">
             <h4 className="font-medium text-sm">{rule.rule_type}</h4>
             <Badge className={`text-xs ${severityColors[rule.severity]}`}>
-              {rule.severity}
+              {rule.severity.charAt(0).toUpperCase() + rule.severity.slice(1)}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">{rule.description}</p>

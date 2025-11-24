@@ -25,8 +25,15 @@ const vehicleSchema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   colour: z.string().min(1, "Colour is required"),
-  purchase_price: z.number().min(0, "Price must be positive").optional(),
-  contract_total: z.number().min(0, "Contract total must be positive").optional(),
+  fuel_type: z.enum(['Petrol', 'Diesel', 'Hybrid', 'Electric'], { required_error: "Fuel type is required" }),
+  purchase_price: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Please enter a valid purchase price" }).min(0, "Price must be positive").optional()
+  ),
+  contract_total: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Please enter a valid contract total" }).min(0, "Contract total must be positive").optional()
+  ),
   acquisition_date: z.date(),
   acquisition_type: z.enum(['Purchase', 'Finance']),
   // MOT & TAX fields
@@ -40,20 +47,31 @@ const vehicleSchema = z.object({
   // Service plan and spare key fields
   has_service_plan: z.boolean().default(false),
   has_spare_key: z.boolean().default(false),
-  spare_key_holder: z.enum(["Company", "Customer"]).optional(),
+  spare_key_holder: z.preprocess(
+    (val) => (val === null ? undefined : val),
+    z.enum(["Company", "Customer"]).optional()
+  ),
   spare_key_notes: z.string().optional(),
   // Security fields
-  has_ghost: z.boolean().default(false),
   has_tracker: z.boolean().default(false),
   has_remote_immobiliser: z.boolean().default(false),
-  ghost_code: z.string().optional(),
   security_notes: z.string().optional(),
+  // Rental rates (required)
+  daily_rate: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ required_error: "Daily rate is required", invalid_type_error: "Please enter a valid daily rate" }).min(1, "Daily rate is required")
+  ),
+  weekly_rate: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ required_error: "Weekly rate is required", invalid_type_error: "Please enter a valid weekly rate" }).min(1, "Weekly rate is required")
+  ),
+  monthly_rate: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ required_error: "Monthly rate is required", invalid_type_error: "Please enter a valid monthly rate" }).min(1, "Monthly rate is required")
+  ),
 }).refine(
   (data) => {
     if (data.acquisition_type === 'Finance' && !data.contract_total) {
-      return false;
-    }
-    if (data.acquisition_type === 'Purchase' && !data.purchase_price) {
       return false;
     }
     return true;
@@ -61,6 +79,17 @@ const vehicleSchema = z.object({
   {
     message: "Contract total is required for financed vehicles",
     path: ["contract_total"],
+  }
+).refine(
+  (data) => {
+    if (data.acquisition_type === 'Purchase' && !data.purchase_price) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Purchase price is required for purchased vehicles",
+    path: ["purchase_price"],
   }
 ).refine((data) => {
   if (data.has_spare_key) {
@@ -80,6 +109,7 @@ interface Vehicle {
   make: string;
   model: string;
   colour: string;
+  fuel_type?: string;
   purchase_price?: number;
   acquisition_date: string;
   acquisition_type: string;
@@ -97,11 +127,12 @@ interface Vehicle {
   has_spare_key?: boolean;
   spare_key_holder?: string | null;
   spare_key_notes?: string | null;
-  has_ghost?: boolean;
   has_tracker?: boolean;
   has_remote_immobiliser?: boolean;
-  ghost_code?: string | null;
   security_notes?: string | null;
+  daily_rate?: number;
+  weekly_rate?: number;
+  monthly_rate?: number;
 }
 
 interface EditVehicleDialogProps {
@@ -128,6 +159,7 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
       make: vehicle.make,
       model: vehicle.model,
       colour: vehicle.colour,
+      fuel_type: vehicle.fuel_type as 'Petrol' | 'Diesel' | 'Hybrid' | 'Electric' | undefined,
       purchase_price: vehicle.purchase_price,
       contract_total: existingContractTotal,
       acquisition_date: new Date(vehicle.acquisition_date),
@@ -139,13 +171,14 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
       has_logbook: vehicle.has_logbook || false,
       has_service_plan: vehicle.has_service_plan || false,
       has_spare_key: vehicle.has_spare_key || false,
-      spare_key_holder: vehicle.spare_key_holder as 'Company' | 'Customer' | undefined,
+      spare_key_holder: (vehicle.spare_key_holder || undefined) as 'Company' | 'Customer' | undefined,
       spare_key_notes: vehicle.spare_key_notes || "",
-      has_ghost: vehicle.has_ghost || false,
       has_tracker: vehicle.has_tracker || false,
       has_remote_immobiliser: vehicle.has_remote_immobiliser || false,
-      ghost_code: vehicle.ghost_code || "",
       security_notes: vehicle.security_notes || "",
+      daily_rate: vehicle.daily_rate ?? undefined,
+      weekly_rate: vehicle.weekly_rate ?? undefined,
+      monthly_rate: vehicle.monthly_rate ?? undefined,
     },
   });
 
@@ -160,6 +193,8 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
   const currentOpen = open !== undefined ? open : isOpen;
 
   const onSubmit = async (data: VehicleFormData) => {
+    console.log('=== FORM SUBMITTED ===');
+    console.log('Form data:', data);
     setLoading(true);
 
     try {
@@ -171,6 +206,7 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
         make: data.make,
         model: data.model,
         colour: data.colour,
+        fuel_type: data.fuel_type || null,
         acquisition_type: data.acquisition_type,
         acquisition_date: data.acquisition_date.toISOString().split('T')[0],
         mot_due_date: data.mot_due_date?.toISOString().split('T')[0],
@@ -182,11 +218,12 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
         has_spare_key: data.has_spare_key,
         spare_key_holder: data.has_spare_key ? data.spare_key_holder : null,
         spare_key_notes: data.has_spare_key ? data.spare_key_notes : null,
-        has_ghost: data.has_ghost,
         has_tracker: data.has_tracker,
         has_remote_immobiliser: data.has_remote_immobiliser,
-        ghost_code: data.has_ghost ? data.ghost_code : null,
         security_notes: data.security_notes || null,
+        daily_rate: data.daily_rate || null,
+        weekly_rate: data.weekly_rate || null,
+        monthly_rate: data.monthly_rate || null,
       };
 
       // Add type-specific fields
@@ -260,7 +297,13 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(
+            onSubmit,
+            (errors) => {
+              console.log('=== VALIDATION FAILED ===');
+              console.log('Validation errors:', errors);
+            }
+          )} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -352,9 +395,19 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                       <FormControl>
                         <Input
                           type="number"
+                          min="0"
+                          step="1"
                           placeholder="Enter amount"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[.\-e]/g, '');
+                            field.onChange(value === '' ? undefined : parseInt(value, 10));
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -362,6 +415,106 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                   )}
                 />
               )}
+            </div>
+
+            <FormField
+              control={form.control}
+              name="fuel_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fuel Type *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fuel type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Petrol">Petrol</SelectItem>
+                      <SelectItem value="Diesel">Diesel</SelectItem>
+                      <SelectItem value="Hybrid">Hybrid</SelectItem>
+                      <SelectItem value="Electric">Electric</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Rental Rates Section */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <h3 className="font-semibold text-sm">Rental Rates *</h3>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Daily (£) *</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value={form.watch("daily_rate") ?? ""}
+                    onKeyDown={(e) => {
+                      if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[.\-e]/g, '');
+                      form.setValue("daily_rate", value === '' ? undefined : parseInt(value, 10));
+                    }}
+                  />
+                  {form.formState.errors.daily_rate && (
+                    <p className="text-sm text-destructive">{form.formState.errors.daily_rate.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Weekly (£) *</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value={form.watch("weekly_rate") ?? ""}
+                    onKeyDown={(e) => {
+                      if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[.\-e]/g, '');
+                      form.setValue("weekly_rate", value === '' ? undefined : parseInt(value, 10));
+                    }}
+                  />
+                  {form.formState.errors.weekly_rate && (
+                    <p className="text-sm text-destructive">{form.formState.errors.weekly_rate.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Monthly (£) *</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value={form.watch("monthly_rate") ?? ""}
+                    onKeyDown={(e) => {
+                      if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[.\-e]/g, '');
+                      form.setValue("monthly_rate", value === '' ? undefined : parseInt(value, 10));
+                    }}
+                  />
+                  {form.formState.errors.monthly_rate && (
+                    <p className="text-sm text-destructive">{form.formState.errors.monthly_rate.message}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <FormField
@@ -403,9 +556,19 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
                       <FormControl>
                         <Input
                           type="number"
+                          min="0"
+                          step="1"
                           placeholder="Enter total contract value"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[.\-e]/g, '');
+                            field.onChange(value === '' ? undefined : parseInt(value, 10));
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -598,37 +761,6 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Security Features</h3>
               
-              <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Ghost Immobilizer</label>
-                  <div className="text-sm text-muted-foreground">
-                    Vehicle has a Ghost immobiliser installed
-                  </div>
-                </div>
-                <Switch
-                  checked={form.watch("has_ghost")}
-                  onCheckedChange={(checked) => {
-                    form.setValue("has_ghost", checked);
-                    if (!checked) {
-                      form.setValue("ghost_code", "");
-                    }
-                  }}
-                />
-              </div>
-
-              {form.watch("has_ghost") && (
-                <div className="ml-4 border-l-2 border-muted pl-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Ghost Code</label>
-                    <Input
-                      placeholder="Enter Ghost immobiliser code"
-                      value={form.watch("ghost_code") || ""}
-                      onChange={(e) => form.setValue("ghost_code", e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-
               <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium">GPS Tracker</label>

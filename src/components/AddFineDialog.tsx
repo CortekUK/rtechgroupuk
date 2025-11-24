@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -64,9 +64,12 @@ type FineFormValues = z.infer<typeof fineFormSchema>;
 interface AddFineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preSelectedVehicleId?: string;
+  preSelectedCustomerId?: string;
+  onSuccess?: () => void;
 }
 
-export const AddFineDialog = ({ open, onOpenChange }: AddFineDialogProps) => {
+export const AddFineDialog = ({ open, onOpenChange, preSelectedVehicleId, preSelectedCustomerId, onSuccess }: AddFineDialogProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const queryClient = useQueryClient();
 
@@ -110,6 +113,23 @@ export const AddFineDialog = ({ open, onOpenChange }: AddFineDialogProps) => {
 
   const selectedCustomerId = form.watch("customer_id");
   const selectedVehicleId = form.watch("vehicle_id");
+
+  // Prefill form when dialog opens with preselected values
+  useEffect(() => {
+    if (open && activeRentals) {
+      if (preSelectedVehicleId) {
+        form.setValue("vehicle_id", preSelectedVehicleId);
+        // Find the rental to get the customer
+        const rental = activeRentals.find(r => r.vehicle_id === preSelectedVehicleId);
+        if (rental) {
+          form.setValue("customer_id", rental.customer_id);
+        }
+      }
+      if (preSelectedCustomerId && !preSelectedVehicleId) {
+        form.setValue("customer_id", preSelectedCustomerId);
+      }
+    }
+  }, [open, preSelectedVehicleId, preSelectedCustomerId, activeRentals, form]);
 
   // Get unique customers from active rentals
   const customers = activeRentals?.reduce((acc, rental) => {
@@ -206,6 +226,7 @@ export const AddFineDialog = ({ open, onOpenChange }: AddFineDialogProps) => {
       onOpenChange(false);
       form.reset();
       setUploadedFiles([]);
+      onSuccess?.();
     },
     onError: (error) => {
       console.error("Error creating fine:", error);
@@ -300,9 +321,9 @@ export const AddFineDialog = ({ open, onOpenChange }: AddFineDialogProps) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Customer *</FormLabel>
-                  <Select onValueChange={handleCustomerChange} value={field.value}>
+                  <Select onValueChange={handleCustomerChange} value={field.value} disabled={!!preSelectedVehicleId}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger disabled={!!preSelectedVehicleId}>
                         <SelectValue placeholder="Select customer" />
                       </SelectTrigger>
                     </FormControl>
@@ -325,9 +346,9 @@ export const AddFineDialog = ({ open, onOpenChange }: AddFineDialogProps) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Vehicle *</FormLabel>
-                  <Select onValueChange={handleVehicleChange} value={field.value}>
+                  <Select onValueChange={handleVehicleChange} value={field.value} disabled={!!preSelectedVehicleId}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger disabled={!!preSelectedVehicleId}>
                         <SelectValue placeholder="Select vehicle" />
                       </SelectTrigger>
                     </FormControl>

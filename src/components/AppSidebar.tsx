@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Settings,
   Shield,
-  Target
+  Target,
+  Receipt
 } from "lucide-react";
 import {
   Sidebar,
@@ -41,6 +42,8 @@ export function AppSidebar() {
     { name: "Customers", href: "/customers", icon: Users },
     { name: "Rentals", href: "/rentals", icon: FileText },
     { name: "Payments", href: "/payments", icon: CreditCard },
+    { name: "Invoices", href: "/invoices", icon: Receipt },
+    { name: "Documents", href: "/documents", icon: FileText },
     { name: "Fines", href: "/fines", icon: AlertCircle },
   ];
 

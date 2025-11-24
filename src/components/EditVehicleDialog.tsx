@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Edit, Car, PoundSterling, CalendarIcon, Eye, EyeOff } from "lucide-react";
+import { Edit, Car, PoundSterling, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,9 +22,29 @@ const vehicleSchema = z.object({
   reg: z.string().min(1, "Registration number is required"),
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
-  year: z.number().min(1900, "Year must be after 1900").max(new Date().getFullYear() + 1, "Year cannot be in the future").optional(),
+  year: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Please enter a valid year" }).min(1900, "Year must be after 1900").max(new Date().getFullYear() + 1, "Year cannot be in the future").optional()
+  ),
   colour: z.string().min(1, "Colour is required"),
-  purchase_price: z.preprocess((val) => val === null ? undefined : val, z.number().min(0, "Price must be positive").optional()),
+  fuel_type: z.enum(['Petrol', 'Diesel', 'Hybrid', 'Electric'], { required_error: "Fuel type is required" }),
+  // Rental rates (required)
+  daily_rate: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ required_error: "Daily rate is required", invalid_type_error: "Please enter a valid daily rate" }).min(1, "Daily rate is required")
+  ),
+  weekly_rate: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ required_error: "Weekly rate is required", invalid_type_error: "Please enter a valid weekly rate" }).min(1, "Weekly rate is required")
+  ),
+  monthly_rate: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ required_error: "Monthly rate is required", invalid_type_error: "Please enter a valid monthly rate" }).min(1, "Monthly rate is required")
+  ),
+  purchase_price: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Please enter a valid purchase price" }).min(0, "Price must be positive").optional()
+  ),
   acquisition_date: z.date(),
   acquisition_type: z.enum(['Purchase', 'Finance']),
   // Finance fields - preprocess null to undefined
@@ -40,8 +60,6 @@ const vehicleSchema = z.object({
   warranty_start_date: z.date().optional(),
   warranty_end_date: z.date().optional(),
   // Security fields
-  has_ghost: z.boolean().default(false),
-  ghost_code: z.string().optional(),
   has_tracker: z.boolean().default(false),
   has_remote_immobiliser: z.boolean().default(false),
   security_notes: z.string().optional(),
@@ -58,17 +76,6 @@ const vehicleSchema = z.object({
     message: "Purchase price is required for purchased vehicles",
     path: ["purchase_price"],
   }
-).refine(
-  (data) => {
-    if (data.has_ghost && (!data.ghost_code || data.ghost_code.trim() === '')) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: "Ghost code is required when Ghost Immobilizer is enabled", 
-    path: ["ghost_code"],
-  }
 );
 
 type VehicleFormData = z.infer<typeof vehicleSchema>;
@@ -80,6 +87,7 @@ interface Vehicle {
   model: string;
   year?: number;
   colour: string;
+  fuel_type?: string;
   purchase_price?: number;
   acquisition_date: string;
   acquisition_type: string;
@@ -92,13 +100,15 @@ interface Vehicle {
   tax_due_date?: string;
   warranty_start_date?: string;
   warranty_end_date?: string;
-  has_ghost?: boolean;
-  ghost_code?: string;
   has_tracker?: boolean;
   has_remote_immobiliser?: boolean;
   security_notes?: string;
   // Logbook field
   has_logbook?: boolean;
+  // Rental rates
+  daily_rate?: number;
+  weekly_rate?: number;
+  monthly_rate?: number;
   // Disposal fields
   is_disposed?: boolean;
   disposal_date?: string;
@@ -118,7 +128,6 @@ interface EditVehicleDialogProps {
 export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showGhostCode, setShowGhostCode] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -130,6 +139,7 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
       model: vehicle.model,
       year: vehicle.year ?? undefined,
       colour: vehicle.colour,
+      fuel_type: vehicle.fuel_type as 'Petrol' | 'Diesel' | 'Hybrid' | 'Electric' | undefined,
       purchase_price: vehicle.purchase_price ?? undefined,
       acquisition_date: new Date(vehicle.acquisition_date),
       acquisition_type: vehicle.acquisition_type as 'Purchase' | 'Finance',
@@ -142,12 +152,13 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
       tax_due_date: vehicle.tax_due_date ? new Date(vehicle.tax_due_date) : undefined,
       warranty_start_date: vehicle.warranty_start_date ? new Date(vehicle.warranty_start_date) : undefined,
       warranty_end_date: vehicle.warranty_end_date ? new Date(vehicle.warranty_end_date) : undefined,
-      has_ghost: vehicle.has_ghost || false,
-      ghost_code: vehicle.ghost_code || "",
       has_tracker: vehicle.has_tracker || false,
       has_remote_immobiliser: vehicle.has_remote_immobiliser || false,
       security_notes: vehicle.security_notes || "",
       has_logbook: vehicle.has_logbook || false,
+      daily_rate: vehicle.daily_rate ?? undefined,
+      weekly_rate: vehicle.weekly_rate ?? undefined,
+      monthly_rate: vehicle.monthly_rate ?? undefined,
     },
   });
 
@@ -162,28 +173,18 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
   const currentOpen = open !== undefined ? open : isOpen;
 
   const onSubmit = async (data: VehicleFormData) => {
-    console.log('Form submission started', data);
-    console.log('Form validation state:', form.formState.errors);
+    console.log('=== FORM SUBMITTED ===');
+    console.log('Form data:', data);
     setLoading(true);
 
     try {
-      // Validate form first
-      const isValid = await form.trigger();
-      console.log('Form validation result:', isValid);
-      
-      if (!isValid) {
-        console.log('Form validation failed:', form.formState.errors);
-        setLoading(false);
-        return;
-      }
-
-      console.log('Sending update to Supabase...');
       const updateData = {
         reg: data.reg,
         make: data.make,
         model: data.model,
         year: data.year,
         colour: data.colour,
+        fuel_type: data.fuel_type,
         acquisition_type: data.acquisition_type,
         acquisition_date: data.acquisition_date.toISOString().split('T')[0],
         // Include purchase price only for purchased vehicles
@@ -203,23 +204,21 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
         warranty_start_date: data.warranty_start_date?.toISOString().split('T')[0],
         warranty_end_date: data.warranty_end_date?.toISOString().split('T')[0],
         // Security fields
-        has_ghost: data.has_ghost,
-        ghost_code: data.ghost_code || null,
         has_tracker: data.has_tracker,
         has_remote_immobiliser: data.has_remote_immobiliser,
         security_notes: data.security_notes || null,
         has_logbook: data.has_logbook,
+        daily_rate: data.daily_rate,
+        weekly_rate: data.weekly_rate,
+        monthly_rate: data.monthly_rate,
       };
-      
-      console.log('Update data:', updateData);
-      
-      const { data: result, error } = await supabase
+
+      const { error } = await supabase
         .from("vehicles")
         .update(updateData)
         .eq('id', vehicle.id)
         .select();
 
-      console.log('Supabase response:', { result, error });
       if (error) throw error;
 
       toast({
@@ -268,11 +267,13 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={(e) => {
-            console.log('Form onSubmit event triggered', e);
-            e.preventDefault();
-            form.handleSubmit(onSubmit)(e);
-          }} className="space-y-4">
+          <form onSubmit={form.handleSubmit(
+            onSubmit,
+            (errors) => {
+              console.log('=== VALIDATION FAILED ===');
+              console.log('Validation errors:', errors);
+            }
+          )} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -341,11 +342,21 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                   <FormItem>
                     <FormLabel>Year</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="e.g. 2020" 
+                      <Input
+                        type="number"
+                        min="1900"
+                        step="1"
+                        placeholder="e.g. 2020"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                        onKeyDown={(e) => {
+                          if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                            e.preventDefault();
+                          }
+                        }}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[.\-e]/g, '');
+                          field.onChange(value === '' ? undefined : parseInt(value, 10));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -378,9 +389,19 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                       <FormControl>
                         <Input
                           type="number"
+                          min="0"
+                          step="1"
                           placeholder="Enter amount"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[.\-e]/g, '');
+                            field.onChange(value === '' ? undefined : parseInt(value, 10));
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -388,6 +409,124 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
                   )}
                 />
               )}
+            </div>
+
+            <FormField
+              control={form.control}
+              name="fuel_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fuel Type *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fuel type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Petrol">Petrol</SelectItem>
+                      <SelectItem value="Diesel">Diesel</SelectItem>
+                      <SelectItem value="Hybrid">Hybrid</SelectItem>
+                      <SelectItem value="Electric">Electric</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Rental Rates Section */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <h3 className="font-semibold text-sm">Rental Rates *</h3>
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="daily_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Daily (£) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          value={field.value ?? ""}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[.\-e]/g, '');
+                            field.onChange(value === '' ? undefined : parseInt(value, 10));
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="weekly_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weekly (£) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          value={field.value ?? ""}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[.\-e]/g, '');
+                            field.onChange(value === '' ? undefined : parseInt(value, 10));
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="monthly_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Monthly (£) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          value={field.value ?? ""}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[.\-e]/g, '');
+                            field.onChange(value === '' ? undefined : parseInt(value, 10));
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* MOT & TAX Due Dates */}
@@ -713,62 +852,6 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
               <div className="grid grid-cols-1 gap-4">
                 <FormField
                   control={form.control}
-                  name="has_ghost"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5">
-                        <FormLabel>Ghost Immobilizer</FormLabel>
-                        <div className="text-sm text-muted-foreground">
-                          Vehicle has a ghost immobiliser fitted
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch("has_ghost") && (
-                  <FormField
-                    control={form.control}
-                    name="ghost_code"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ghost Immobilizer Code *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showGhostCode ? "text" : "password"}
-                              placeholder="Enter ghost immobiliser code" 
-                              {...field} 
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                              onClick={() => setShowGhostCode(!showGhostCode)}
-                            >
-                              {showGhostCode ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                <FormField
-                  control={form.control}
                   name="has_tracker"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
@@ -851,29 +934,10 @@ export const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDi
             />
 
             <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" type="button" onClick={() => {
-                console.log('Cancel button clicked');
-                handleOpenChange(false);
-              }}>
+              <Button variant="outline" type="button" onClick={() => handleOpenChange(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="button"
-                disabled={loading}
-                onClick={async (e) => {
-                  console.log('=== UPDATE BUTTON CLICKED ===');
-                  console.log('Event:', e);
-                  console.log('Form state:', form.formState);
-                  console.log('Form values:', form.getValues());
-                  console.log('Form errors:', form.formState.errors);
-                  console.log('Loading state:', loading);
-                  
-                  // Manually trigger the submit
-                  e.preventDefault();
-                  console.log('About to call onSubmit...');
-                  await onSubmit(form.getValues());
-                }}
-              >
+              <Button type="submit" disabled={loading}>
                 {loading ? "Updating..." : "Update Vehicle"}
               </Button>
             </div>

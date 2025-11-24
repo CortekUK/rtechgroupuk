@@ -14,7 +14,14 @@ interface Vehicle {
   colour: string;
   status: string;
   purchase_price: number;
-  photo_url?: string;
+}
+
+interface VehiclePhoto {
+  id: string;
+  vehicle_id: string;
+  photo_url: string;
+  display_order: number;
+  is_primary: boolean;
 }
 
 interface VehiclePL {
@@ -44,14 +51,14 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-const VehicleCard = ({ vehicle, pl }: { vehicle: Vehicle; pl?: VehiclePL }) => {
+const VehicleCard = ({ vehicle, pl, photoUrl }: { vehicle: Vehicle; pl?: VehiclePL; photoUrl?: string }) => {
   const navigate = useNavigate();
-  
+
   // Calculate operational profit (revenue minus operational costs, excluding acquisition)
   const operationalCosts = pl ? (Number(pl.cost_service) + Number(pl.cost_fines) + Number(pl.cost_other) + Number(pl.cost_finance)) : 0;
   const operationalProfit = pl ? Number(pl.total_revenue) - operationalCosts : 0;
   const isOperationalProfit = operationalProfit > 0;
-  
+
   // Total P&L is already calculated in the view as net_profit
   const totalPL = pl ? Number(pl.net_profit) : -(vehicle.purchase_price || 0);
   const isTotalProfit = totalPL > 0;
@@ -65,8 +72,8 @@ const VehicleCard = ({ vehicle, pl }: { vehicle: Vehicle; pl?: VehiclePL }) => {
       <CardHeader className="pb-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-[2]">
-            <VehiclePhotoThumbnail 
-              photoUrl={vehicle.photo_url}
+            <VehiclePhotoThumbnail
+              photoUrl={photoUrl}
               vehicleReg={vehicle.reg}
               size="sm"
               className="shrink-0"
@@ -146,9 +153,33 @@ export const FleetOverview = () => {
         .from("vehicles")
         .select("*")
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data as Vehicle[];
+    },
+  });
+
+  const { data: vehiclePhotos } = useQuery({
+    queryKey: ["vehicle-photos-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicle_photos")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+
+      // Create lookup by vehicle_id - use primary photo or first photo
+      const photoByVehicle: Record<string, string> = {};
+
+      data?.forEach((photo: VehiclePhoto) => {
+        // Only set if not already set (first photo by display_order) or if this is primary
+        if (!photoByVehicle[photo.vehicle_id] || photo.is_primary) {
+          photoByVehicle[photo.vehicle_id] = photo.photo_url;
+        }
+      });
+
+      return photoByVehicle;
     },
   });
 
@@ -158,12 +189,12 @@ export const FleetOverview = () => {
       const { data, error } = await supabase
         .from("view_pl_by_vehicle")
         .select("*");
-      
+
       if (error) throw error;
-      
+
       // Convert to lookup by vehicle_id
       const plByVehicle: Record<string, VehiclePL> = {};
-      
+
       data?.forEach((entry) => {
         plByVehicle[entry.vehicle_id] = {
           vehicle_id: entry.vehicle_id,
@@ -177,7 +208,7 @@ export const FleetOverview = () => {
           cost_finance: Number(entry.cost_finance || 0),
         };
       });
-      
+
       return plByVehicle;
     },
   });
@@ -198,10 +229,11 @@ export const FleetOverview = () => {
         {vehicles && vehicles.length > 0 ? (
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {vehicles.map((vehicle) => (
-              <VehicleCard 
-                key={vehicle.id} 
-                vehicle={vehicle} 
+              <VehicleCard
+                key={vehicle.id}
+                vehicle={vehicle}
                 pl={vehiclePL?.[vehicle.id]}
+                photoUrl={vehiclePhotos?.[vehicle.id]}
               />
             ))}
           </div>

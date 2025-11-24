@@ -35,6 +35,8 @@ import CreateFine from "@/pages/CreateFine";
 import FineDetail from "@/pages/FineDetail";
 import RemindersPageNew from "@/pages/RemindersPageNew";
 import InsuranceListEnhanced from "@/pages/InsuranceListEnhanced";
+import InvoicesList from "@/pages/InvoicesList";
+import DocumentsList from "@/pages/DocumentsList";
 import Login from "@/pages/Login";
 import ResetPassword from "@/pages/ResetPassword";
 import UsersManagement from "@/pages/UsersManagement";
@@ -84,6 +86,8 @@ function App() {
             <Route path="/rentals/:id" element={<AuthGuard><Layout><RentalDetail /></Layout></AuthGuard>} />
             <Route path="/payments" element={<AuthGuard><Layout><PaymentsList /></Layout></AuthGuard>} />
             <Route path="/payments/:id" element={<AuthGuard><Layout><PaymentDetail /></Layout></AuthGuard>} />
+            <Route path="/invoices" element={<AuthGuard><Layout><InvoicesList /></Layout></AuthGuard>} />
+            <Route path="/documents" element={<AuthGuard><Layout><DocumentsList /></Layout></AuthGuard>} />
             <Route path="/charges" element={<AuthGuard><Layout><ChargesList /></Layout></AuthGuard>} />
             <Route path="/plates" element={<AuthGuard><Layout><PlatesListEnhanced /></Layout></AuthGuard>} />
             <Route path="/plates/:id" element={<AuthGuard><Layout><PlateDetail /></Layout></AuthGuard>} />

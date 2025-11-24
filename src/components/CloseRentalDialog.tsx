@@ -61,8 +61,9 @@ export const CloseRentalDialog = ({ open, onOpenChange, rental }: CloseRentalDia
   const closeRentalMutation = useMutation({
     mutationFn: async (data: CloseRentalFormData) => {
       if (!rental) throw new Error('No rental selected');
-      
-      const { error } = await supabase
+
+      // Update rental status to Closed
+      const { error: rentalError } = await supabase
         .from('rentals')
         .update({
           status: 'Closed',
@@ -71,19 +72,35 @@ export const CloseRentalDialog = ({ open, onOpenChange, rental }: CloseRentalDia
         })
         .eq('id', rental.id);
 
-      if (error) throw error;
+      if (rentalError) throw rentalError;
+
+      // Update vehicle status to Available
+      const { error: vehicleError } = await supabase
+        .from('vehicles')
+        .update({
+          status: 'Available',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', rental.vehicle.id);
+
+      if (vehicleError) {
+        console.error('Error updating vehicle status:', vehicleError);
+        // Don't throw - rental was already closed successfully
+      }
     },
     onSuccess: () => {
       toast({
         title: "Rental Closed",
-        description: `Rental ${rental?.rental_number} has been successfully closed.`,
+        description: `Rental ${rental?.rental_number} has been successfully closed. Vehicle is now available.`,
       });
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['rentals'] });
       queryClient.invalidateQueries({ queryKey: ['enhanced-rentals'] });
       queryClient.invalidateQueries({ queryKey: ['customer-rentals'] });
-      
+      queryClient.invalidateQueries({ queryKey: ['vehicles-list'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle', rental?.vehicle.id] });
+
       handleClose();
     },
     onError: (error) => {

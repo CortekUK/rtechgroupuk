@@ -88,19 +88,39 @@ const CreateFine = () => {
     },
   });
 
-  const { data: vehicles } = useQuery({
-    queryKey: ["available-vehicles"],
+  // Fetch active rentals to get customer-vehicle relationships
+  const { data: activeRentals } = useQuery({
+    queryKey: ["active-rentals-for-fines"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vehicles")
-        .select("id, reg, make, model, status")
-        .eq("status", "Available")
-        .order("reg");
+        .from("rentals")
+        .select(`
+          id,
+          customer_id,
+          vehicle_id,
+          customers!inner(id, name),
+          vehicles!inner(id, reg, make, model)
+        `)
+        .eq("status", "Active");
 
       if (error) throw error;
-      return data;
+      return data.map(rental => ({
+        rental_id: rental.id,
+        customer_id: rental.customer_id,
+        vehicle_id: rental.vehicle_id,
+        vehicle_reg: (rental.vehicles as any).reg,
+        vehicle_make: (rental.vehicles as any).make,
+        vehicle_model: (rental.vehicles as any).model,
+      }));
     },
   });
+
+  const selectedCustomerId = form.watch("customer_id");
+
+  // Get vehicles rented by the selected customer
+  const customerVehicles = selectedCustomerId
+    ? activeRentals?.filter(rental => rental.customer_id === selectedCustomerId)
+    : [];
 
   const createFineMutation = useMutation({
     mutationFn: async (data: FineFormData) => {
@@ -182,7 +202,19 @@ const CreateFine = () => {
   };
 
   const selectedCustomer = customers?.find(c => c.id === form.watch("customer_id"));
-  const selectedVehicle = vehicles?.find(v => v.id === form.watch("vehicle_id"));
+  const selectedVehicle = customerVehicles?.find(v => v.vehicle_id === form.watch("vehicle_id"));
+
+  // Clear vehicle when customer changes
+  const handleCustomerChange = (customerId: string) => {
+    form.setValue("customer_id", customerId);
+    form.setValue("vehicle_id", ""); // Clear vehicle selection
+
+    // Auto-select vehicle if customer has only one rented vehicle
+    const vehicles = activeRentals?.filter(r => r.customer_id === customerId);
+    if (vehicles?.length === 1) {
+      form.setValue("vehicle_id", vehicles[0].vehicle_id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -271,7 +303,7 @@ const CreateFine = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Customer *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={handleCustomerChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select customer" />
@@ -296,18 +328,34 @@ const CreateFine = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Vehicle *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={!selectedCustomerId}
+                          >
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select vehicle" />
+                              <SelectTrigger disabled={!selectedCustomerId}>
+                                <SelectValue placeholder={
+                                  !selectedCustomerId
+                                    ? "Select customer first"
+                                    : customerVehicles?.length === 0
+                                      ? "No rented vehicles"
+                                      : "Select vehicle"
+                                } />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {vehicles?.map((vehicle) => (
-                                <SelectItem key={vehicle.id} value={vehicle.id}>
-                                  {vehicle.reg} • {vehicle.make} {vehicle.model}
-                                </SelectItem>
-                              ))}
+                              {customerVehicles?.length === 0 ? (
+                                <div className="py-6 text-center text-sm text-muted-foreground">
+                                  No vehicles rented by this customer
+                                </div>
+                              ) : (
+                                customerVehicles?.map((rental) => (
+                                  <SelectItem key={rental.vehicle_id} value={rental.vehicle_id}>
+                                    {rental.vehicle_reg} • {rental.vehicle_make} {rental.vehicle_model}
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -337,7 +385,7 @@ const CreateFine = () => {
                       control={form.control}
                       name="issue_date"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                           <FormLabel>Issue Date *</FormLabel>
                           <FormControl>
                             <DatePickerInput
@@ -345,6 +393,7 @@ const CreateFine = () => {
                               onSelect={handleIssueDateChange}
                               placeholder="Select issue date"
                               disabled={(date) => date > new Date()}
+                              className="w-full"
                             />
                           </FormControl>
                           <FormMessage />
@@ -356,7 +405,7 @@ const CreateFine = () => {
                       control={form.control}
                       name="due_date"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                           <FormLabel>Due Date *</FormLabel>
                           <FormControl>
                             <DatePickerInput
@@ -364,6 +413,7 @@ const CreateFine = () => {
                               onSelect={field.onChange}
                               placeholder="Select due date"
                               disabled={(date) => date < watchedIssueDate}
+                              className="w-full"
                             />
                           </FormControl>
                           <FormMessage />
@@ -474,7 +524,7 @@ const CreateFine = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Vehicle</p>
                 <p className="font-medium">
-                  {selectedVehicle ? `${selectedVehicle.reg} • ${selectedVehicle.make} ${selectedVehicle.model}` : "Not selected"}
+                  {selectedVehicle ? `${selectedVehicle.vehicle_reg} • ${selectedVehicle.vehicle_make} ${selectedVehicle.vehicle_model}` : "Not selected"}
                 </p>
               </div>
 

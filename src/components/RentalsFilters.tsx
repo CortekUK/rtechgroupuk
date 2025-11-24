@@ -64,26 +64,26 @@ export const RentalsFilters = ({ filters, onFiltersChange, onClearFilters }: Ren
           </SelectContent>
         </Select>
 
-        <Select value={filters.duration || "all"} onValueChange={(value) => updateFilter("duration", value)}>
-          <SelectTrigger className="w-[150px]">
+        {/* <Select value={filters.duration || "all"} onValueChange={(value) => updateFilter("duration", value)}>
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Duration" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Durations</SelectItem>
-            <SelectItem value="≤12 mo">≤12 months</SelectItem>
-            <SelectItem value="13–24 mo">13–24 months</SelectItem>
-            <SelectItem value=">24 mo">&gt;24 months</SelectItem>
+            <SelectItem value="short">Short (Up to 1 year)</SelectItem>
+            <SelectItem value="medium">Medium (1-2 years)</SelectItem>
+            <SelectItem value="long">Long (Over 2 years)</SelectItem>
           </SelectContent>
-        </Select>
+        </Select> */}
 
         <Select value={filters.initialPayment || "all"} onValueChange={(value) => updateFilter("initialPayment", value)}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Initial Payment" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="set">Set</SelectItem>
-            <SelectItem value="missing">Missing</SelectItem>
+            <SelectItem value="all">All Rentals</SelectItem>
+            <SelectItem value="set">With Initial Payment</SelectItem>
+            <SelectItem value="missing">No Initial Payment</SelectItem>
           </SelectContent>
         </Select>
       </div>

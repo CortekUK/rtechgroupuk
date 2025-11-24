@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, ArrowLeft, PoundSterling, Plus, X } from "lucide-react";
+import { FileText, ArrowLeft, Plus, X, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AddPaymentDialog } from "@/components/AddPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +14,7 @@ import { useRentalInitialFee } from "@/hooks/useRentalInitialFee";
 import { RentalLedger } from "@/components/RentalLedger";
 import { ComplianceStatusPanel } from "@/components/ComplianceStatusPanel";
 import { CloseRentalDialog } from "@/components/CloseRentalDialog";
+import { getRentalStatus } from "@/lib/rentalUtils";
 
 interface Rental {
   id: string;
@@ -34,6 +34,7 @@ const RentalDetail = () => {
   const queryClient = useQueryClient();
   const [showAddPayment, setShowAddPayment] = useState(false);
   const [showCloseRental, setShowCloseRental] = useState(false);
+  const [sendingDocuSign, setSendingDocuSign] = useState(false);
 
   const { data: rental, isLoading } = useQuery({
     queryKey: ["rental", id],
@@ -47,7 +48,7 @@ const RentalDetail = () => {
         `)
         .eq("id", id)
         .single();
-      
+
       if (error) throw error;
       return data as Rental;
     },
@@ -56,6 +57,52 @@ const RentalDetail = () => {
 
   const { data: rentalTotals } = useRentalTotals(id);
   const { data: initialFee } = useRentalInitialFee(id);
+
+  // Handle DocuSign resending
+  const handleResendDocuSign = async () => {
+    if (!rental || !id) return;
+
+    setSendingDocuSign(true);
+    try {
+      console.log('Resending DocuSign envelope for rental:', id);
+      const { data: envelopeResult, error: envelopeError } = await supabase.functions.invoke('create-docusign-envelope', {
+        body: { rentalId: id }
+      });
+
+      if (envelopeError) {
+        console.error('DocuSign envelope creation error:', envelopeError);
+        toast({
+          title: "Failed to Send Agreement",
+          description: "Could not send the rental agreement for signing. Please try again.",
+          variant: "destructive",
+        });
+      } else if (envelopeResult && envelopeResult.ok) {
+        console.log('DocuSign envelope created:', envelopeResult.envelopeId);
+        toast({
+          title: "Agreement Sent Successfully",
+          description: "Rental agreement has been sent for signature.",
+        });
+        // Refresh rental data to get updated docusign status
+        queryClient.invalidateQueries({ queryKey: ["rental", id] });
+      } else {
+        console.error('DocuSign envelope creation failed:', envelopeResult);
+        toast({
+          title: "Failed to Send Agreement",
+          description: envelopeResult?.error || "Unknown error occurred",
+          variant: "destructive",
+        });
+      }
+    } catch (envelopeException) {
+      console.error('Exception creating DocuSign envelope:', envelopeException);
+      toast({
+        title: "Failed to Send Agreement",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingDocuSign(false);
+    }
+  };
 
   if (isLoading) {
     return <div>Loading rental details...</div>;
@@ -69,6 +116,9 @@ const RentalDetail = () => {
   const totalCharges = rentalTotals?.totalCharges || 0;
   const totalPayments = rentalTotals?.totalPayments || 0;
   const outstandingBalance = rentalTotals?.outstanding || 0;
+
+  // Compute the actual status based on dates (same logic as RentalsList)
+  const computedStatus = rental ? getRentalStatus(rental.start_date, rental.end_date, rental.status) : rental?.status;
 
 
   return (
@@ -92,7 +142,15 @@ const RentalDetail = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add Payment
           </Button>
-          {rental.status !== 'Closed' && (
+          <Button
+            variant="outline"
+            onClick={handleResendDocuSign}
+            disabled={sendingDocuSign}
+          >
+            <Send className="h-4 w-4 mr-2" />
+            {sendingDocuSign ? "Sending..." : "Send DocuSign"}
+          </Button>
+          {computedStatus === 'Active' && (
             <Button
               variant="outline"
               onClick={() => setShowCloseRental(true)}
@@ -144,12 +202,14 @@ const RentalDetail = () => {
             <CardTitle className="text-lg">Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge variant={rental.status === 'Active' ? 'default' : 'secondary'} className="text-lg px-3 py-1">
-              {rental.status}
+            <Badge
+              variant={computedStatus === 'Active' ? 'default' : computedStatus === 'Upcoming' ? 'outline' : 'secondary'}
+              className="text-lg px-3 py-1"
+            >
+              {computedStatus}
             </Badge>
           </CardContent>
         </Card>
-
       </div>
 
       {/* Rental Details */}
@@ -199,10 +259,10 @@ const RentalDetail = () => {
 
       {/* Payment Status Compliance */}
       {id && (
-        <ComplianceStatusPanel 
-          objectType="Rental" 
-          objectId={id} 
-          title="Payment Reminders" 
+        <ComplianceStatusPanel
+          objectType="Rental"
+          objectId={id}
+          title="Payment Reminders"
         />
       )}
 

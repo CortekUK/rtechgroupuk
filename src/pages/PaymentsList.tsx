@@ -215,7 +215,7 @@ const PaymentsList = () => {
                       <TableHead>Type</TableHead>
                       <TableHead>Method</TableHead>
                       <TableHead 
-                        className="text-right cursor-pointer hover:bg-muted/50"
+                        className="text-left cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort('amount')}
                       >
                         Amount {sortBy === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -237,7 +237,7 @@ const PaymentsList = () => {
                           <TableCell>
                             <button
                               onClick={() => navigate(`/customers/${payment.customers.id}`)}
-                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                              className="text-primary hover:text-primary hover:underline"
                             >
                               {payment.customers.name}
                             </button>
@@ -246,7 +246,7 @@ const PaymentsList = () => {
                             {payment.vehicles ? (
                               <button
                                 onClick={() => navigate(`/vehicles/${payment.vehicles!.id}`)}
-                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                                className="text-primary hover:text-primary hover:underline"
                               >
                                 {payment.vehicles.reg}
                                 {payment.vehicles.make && payment.vehicles.model && 
@@ -276,7 +276,7 @@ const PaymentsList = () => {
                              </Badge>
                            </TableCell>
                            <TableCell>{payment.method || '-'}</TableCell>
-                          <TableCell className="text-right font-medium">
+                          <TableCell className="text-left font-medium">
                             ${payment.amount.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
                           </TableCell>
                           <TableCell>

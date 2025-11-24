@@ -44,9 +44,10 @@ interface Vehicle {
   has_spare_key?: boolean;
   spare_key_holder?: string | null;
   spare_key_notes?: string | null;
+  created_at?: string;
 }
 
-type SortField = 'reg' | 'make_model' | 'acquisition_type' | 'status' | 'mot_due_date' | 'tax_due_date' | 'warranty_end_date' | 'net_profit';
+type SortField = 'reg' | 'make_model' | 'acquisition_type' | 'status' | 'mot_due_date' | 'tax_due_date' | 'warranty_end_date' | 'net_profit' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 type PerformanceFilter = 'all' | 'profitable' | 'loss';
 
@@ -86,9 +87,9 @@ export default function VehiclesListEnhanced() {
     setPageSize(urlPageSize);
   }, [searchParams]);
 
-  // Read sort params directly from URL
-  const sortField = (searchParams.get('sort') as SortField) || 'reg';
-  const sortDirection = (searchParams.get('dir') as SortDirection) || 'asc';
+  // Read sort params directly from URL - default to created_at desc (newest first)
+  const sortField = (searchParams.get('sort') as SortField) || 'created_at';
+  const sortDirection = (searchParams.get('dir') as SortDirection) || 'desc';
 
   // Update URL params when filters change
   const updateFilters = (newFilters: Partial<FiltersState>) => {
@@ -99,8 +100,8 @@ export default function VehiclesListEnhanced() {
     Object.entries(updatedFilters).forEach(([key, value]) => {
       if (value && value !== 'all') params.set(key, value);
     });
-    if (sortField !== 'reg') params.set('sort', sortField);
-    if (sortDirection !== 'asc') params.set('dir', sortDirection);
+    if (sortField !== 'created_at') params.set('sort', sortField);
+    if (sortDirection !== 'desc') params.set('dir', sortDirection);
     if (currentPage !== 1) params.set('page', currentPage.toString());
     if (pageSize !== 25) params.set('limit', pageSize.toString());
     
@@ -114,8 +115,8 @@ export default function VehiclesListEnhanced() {
       const { data, error } = await supabase
         .from("vehicles")
         .select("*")
-        .order("reg");
-      
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
       return data as Vehicle[];
     },
@@ -247,9 +248,13 @@ export default function VehiclesListEnhanced() {
           aVal = a.pl_data.net_profit;
           bVal = b.pl_data.net_profit;
           break;
+        case 'created_at':
+          aVal = a.created_at || '1970-01-01';
+          bVal = b.created_at || '1970-01-01';
+          break;
         default:
-          aVal = a.reg;
-          bVal = b.reg;
+          aVal = a.created_at || '1970-01-01';
+          bVal = b.created_at || '1970-01-01';
       }
 
       if (typeof aVal === 'string') {

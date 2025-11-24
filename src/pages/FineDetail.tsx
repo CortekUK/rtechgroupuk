@@ -250,7 +250,7 @@ const FineDetail = () => {
 
   return (
     <TooltipProvider>
-      <div className="space-y-16 max-w-7xl mx-auto p-6 pt-8">
+      <div className="space-y-16 max-w-7xl p-6 pt-0">
         {/* Enhanced Header */}
         <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 mb-8">
           <div className="flex items-center gap-4">
@@ -294,7 +294,7 @@ const FineDetail = () => {
                   <Button
                     variant="outline"
                     onClick={() => setShowAuthorityPaymentDialog(true)}
-                    className={hasAuthorityPayments ? "border-green-200 bg-green-50" : ""}
+                    className={hasAuthorityPayments ? "border-green-200 text-black bg-green-50" : ""}
                   >
                     <Receipt className="h-4 w-4 mr-2" />
                     Record Authority Payment

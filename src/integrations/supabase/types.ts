@@ -1928,10 +1928,12 @@ export type Database = {
           color: string | null
           colour: string | null
           created_at: string | null
+          daily_rate: number | null
           disposal_buyer: string | null
           disposal_date: string | null
           disposal_notes: string | null
           finance_start_date: string | null
+          fuel_type: string | null
           ghost_code: string | null
           has_ghost: boolean | null
           has_logbook: boolean
@@ -1947,6 +1949,7 @@ export type Database = {
           make: string | null
           model: string | null
           monthly_payment: number | null
+          monthly_rate: number | null
           mot_due_date: string | null
           photo_url: string | null
           purchase_price: number | null
@@ -1961,6 +1964,7 @@ export type Database = {
           updated_at: string
           warranty_end_date: string | null
           warranty_start_date: string | null
+          weekly_rate: number | null
           year: number | null
         }
         Insert: {
@@ -1970,10 +1974,12 @@ export type Database = {
           color?: string | null
           colour?: string | null
           created_at?: string | null
+          daily_rate?: number | null
           disposal_buyer?: string | null
           disposal_date?: string | null
           disposal_notes?: string | null
           finance_start_date?: string | null
+          fuel_type?: string | null
           ghost_code?: string | null
           has_ghost?: boolean | null
           has_logbook?: boolean
@@ -1989,6 +1995,7 @@ export type Database = {
           make?: string | null
           model?: string | null
           monthly_payment?: number | null
+          monthly_rate?: number | null
           mot_due_date?: string | null
           photo_url?: string | null
           purchase_price?: number | null
@@ -2003,6 +2010,7 @@ export type Database = {
           updated_at?: string
           warranty_end_date?: string | null
           warranty_start_date?: string | null
+          weekly_rate?: number | null
           year?: number | null
         }
         Update: {
@@ -2012,10 +2020,12 @@ export type Database = {
           color?: string | null
           colour?: string | null
           created_at?: string | null
+          daily_rate?: number | null
           disposal_buyer?: string | null
           disposal_date?: string | null
           disposal_notes?: string | null
           finance_start_date?: string | null
+          fuel_type?: string | null
           ghost_code?: string | null
           has_ghost?: boolean | null
           has_logbook?: boolean
@@ -2031,6 +2041,7 @@ export type Database = {
           make?: string | null
           model?: string | null
           monthly_payment?: number | null
+          monthly_rate?: number | null
           mot_due_date?: string | null
           photo_url?: string | null
           purchase_price?: number | null
@@ -2045,9 +2056,151 @@ export type Database = {
           updated_at?: string
           warranty_end_date?: string | null
           warranty_start_date?: string | null
+          weekly_rate?: number | null
           year?: number | null
         }
         Relationships: []
+      }
+      vehicle_photos: {
+        Row: {
+          id: string
+          vehicle_id: string
+          photo_url: string
+          display_order: number
+          is_primary: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          vehicle_id: string
+          photo_url: string
+          display_order?: number
+          is_primary?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          vehicle_id?: string
+          photo_url?: string
+          display_order?: number
+          is_primary?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_photos_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      invoices: {
+        Row: {
+          id: string
+          invoice_number: string
+          rental_id: string | null
+          customer_id: string
+          vehicle_id: string | null
+          issue_date: string
+          due_date: string
+          customer_name: string
+          customer_email: string | null
+          customer_phone: string | null
+          customer_address: string | null
+          vehicle_reg: string | null
+          vehicle_make: string | null
+          vehicle_model: string | null
+          rental_start_date: string | null
+          rental_end_date: string | null
+          line_items: Json
+          subtotal: number
+          tax_rate: number | null
+          tax_amount: number | null
+          total_amount: number
+          status: string
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          invoice_number: string
+          rental_id?: string | null
+          customer_id: string
+          vehicle_id?: string | null
+          issue_date?: string
+          due_date: string
+          customer_name: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          customer_address?: string | null
+          vehicle_reg?: string | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          rental_start_date?: string | null
+          rental_end_date?: string | null
+          line_items?: Json
+          subtotal?: number
+          tax_rate?: number | null
+          tax_amount?: number | null
+          total_amount?: number
+          status?: string
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          invoice_number?: string
+          rental_id?: string | null
+          customer_id?: string
+          vehicle_id?: string | null
+          issue_date?: string
+          due_date?: string
+          customer_name?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          customer_address?: string | null
+          vehicle_reg?: string | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          rental_start_date?: string | null
+          rental_end_date?: string | null
+          line_items?: Json
+          subtotal?: number
+          tax_rate?: number | null
+          tax_amount?: number | null
+          total_amount?: number
+          status?: string
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "rentals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

@@ -232,11 +232,11 @@ const FinesList = () => {
           </div>
         </TableCell>
         
-        <TableCell className="text-right font-medium">
+        <TableCell className="text-left font-medium">
           £{Number(fine.amount).toLocaleString()}
         </TableCell>
         
-        <TableCell className="text-right">
+        <TableCell className="text-left">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -331,7 +331,7 @@ const FinesList = () => {
             <TableHead>Liability</TableHead>
             <TableHead>Status</TableHead>
             <TableHead 
-              className="text-right cursor-pointer hover:bg-muted/50"
+              className="text-left cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort('amount')}
             >
               <div className="flex items-center justify-end gap-1">
@@ -339,7 +339,7 @@ const FinesList = () => {
                 <ArrowUpDown className="h-4 w-4" />
               </div>
             </TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-left">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -378,9 +378,11 @@ const FinesList = () => {
     );
   }
 
-  const pcnFines = filteredFines.filter(fine => fine.type === 'PCN');
-  const speedingFines = filteredFines.filter(fine => fine.type === 'Speeding');
-  const otherFines = filteredFines.filter(fine => fine.type === 'Other');
+  // Calculate counts from original data (not filtered by tab)
+  const allFines = finesData?.fines || [];
+  const pcnCount = allFines.filter(fine => fine.type === 'PCN').length;
+  const speedingCount = allFines.filter(fine => fine.type === 'Speeding').length;
+  const otherCount = allFines.filter(fine => fine.type === 'Other').length;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -430,19 +432,19 @@ const FinesList = () => {
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="all">
-                All ({filteredFines.length})
+                All ({allFines.length})
               </TabsTrigger>
               <TabsTrigger value="pcn">
-                PCN ({pcnFines.length})
+                PCN ({pcnCount})
               </TabsTrigger>
               <TabsTrigger value="speeding">
-                Speeding ({speedingFines.length})
+                Speeding ({speedingCount})
               </TabsTrigger>
               <TabsTrigger value="other">
-                Other ({otherFines.length})
+                Other ({otherCount})
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="all" className="mt-6">
               {isLoading ? (
                 <div className="text-center py-8">Loading fines...</div>
@@ -450,28 +452,28 @@ const FinesList = () => {
                 renderFinesTable(filteredFines)
               )}
             </TabsContent>
-            
+
             <TabsContent value="pcn" className="mt-6">
               {isLoading ? (
                 <div className="text-center py-8">Loading PCN fines...</div>
               ) : (
-                renderFinesTable(pcnFines)
+                renderFinesTable(filteredFines)
               )}
             </TabsContent>
-            
+
             <TabsContent value="speeding" className="mt-6">
               {isLoading ? (
                 <div className="text-center py-8">Loading speeding fines...</div>
               ) : (
-                renderFinesTable(speedingFines)
+                renderFinesTable(filteredFines)
               )}
             </TabsContent>
-            
+
             <TabsContent value="other" className="mt-6">
               {isLoading ? (
                 <div className="text-center py-8">Loading other fines...</div>
               ) : (
-                renderFinesTable(otherFines)
+                renderFinesTable(filteredFines)
               )}
             </TabsContent>
           </Tabs>

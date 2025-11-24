@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -91,16 +91,48 @@ export const EnhancedAddPlateDialog = ({
   const form = useForm<PlateFormData>({
     resolver: zodResolver(plateSchema),
     defaultValues: {
-      plate_number: editPlate?.plate_number || "",
-      vehicle_id: editPlate?.vehicle_id || preSelectedVehicleId || "none",
-      supplier: editPlate?.supplier || "",
-      order_date: editPlate?.order_date ? new Date(editPlate.order_date) : undefined,
-      cost: editPlate?.cost || 0,
-      status: (editPlate?.status as any) || (preSelectedVehicleId ? 'assigned' : 'ordered'),
-      retention_doc_reference: editPlate?.retention_doc_reference || "",
-      notes: editPlate?.notes || "",
+      plate_number: "",
+      vehicle_id: preSelectedVehicleId || "none",
+      supplier: "",
+      order_date: undefined,
+      cost: "0",
+      status: preSelectedVehicleId ? 'assigned' : 'ordered',
+      retention_doc_reference: "",
+      notes: "",
     },
   });
+
+  // Reset form when dialog opens or editPlate changes
+  useEffect(() => {
+    if (open) {
+      if (editPlate) {
+        form.reset({
+          plate_number: editPlate.plate_number || "",
+          vehicle_id: editPlate.vehicle_id || "none",
+          supplier: editPlate.supplier || "",
+          order_date: editPlate.order_date ? new Date(editPlate.order_date) : undefined,
+          cost: editPlate.cost?.toString() || "0",
+          status: (editPlate.status as any) || 'ordered',
+          retention_doc_reference: editPlate.retention_doc_reference || "",
+          notes: editPlate.notes || "",
+        });
+        setExistingDocumentUrl(editPlate.document_url || null);
+      } else {
+        form.reset({
+          plate_number: "",
+          vehicle_id: preSelectedVehicleId || "none",
+          supplier: "",
+          order_date: undefined,
+          cost: "0",
+          status: preSelectedVehicleId ? 'assigned' : 'ordered',
+          retention_doc_reference: "",
+          notes: "",
+        });
+        setExistingDocumentUrl(null);
+      }
+      setUploadedFile(null);
+    }
+  }, [open, editPlate, preSelectedVehicleId, form]);
 
   // Get available vehicles
   const { data: vehicles } = useQuery({
@@ -338,7 +370,7 @@ export const EnhancedAddPlateDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
@@ -365,7 +397,7 @@ export const EnhancedAddPlateDialog = ({
                   <FormLabel>
                     Vehicle {watchedStatus === 'assigned' && <span className="text-destructive">*</span>}
                   </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select vehicle (optional)" />
@@ -513,7 +545,7 @@ export const EnhancedAddPlateDialog = ({
                 <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50">
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">{uploadedFile.name}</span>
+                    <span className="text-sm text-black">{uploadedFile.name}</span>
                     <Badge variant="secondary" className="text-xs">
                       {(uploadedFile.size / 1024 / 1024).toFixed(1)} MB
                     </Badge>

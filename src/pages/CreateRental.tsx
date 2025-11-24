@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { addMonths, isAfter, isBefore, subYears, startOfDay } from "date-fns";
+import { addMonths, addDays, isAfter, isBefore, subYears, startOfDay, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, Save, AlertTriangle, Mail } from "lucide-react";
+import { ArrowLeft, FileText, Save, AlertTriangle, Mail, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerActiveRentals } from "@/hooks/useCustomerActiveRentals";
@@ -20,19 +20,35 @@ import { PAYMENT_TYPES } from "@/lib/constants";
 import { ContractSummary } from "@/components/ContractSummary";
 import { DatePickerInput } from "@/components/DatePickerInput";
 import { CurrencyInput } from "@/components/CurrencyInput";
+import { useInvoices, Invoice, InvoiceLineItem } from "@/hooks/useInvoices";
+import { InvoiceDialog } from "@/components/InvoiceDialog";
 
 const rentalSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
   vehicle_id: z.string().min(1, "Vehicle is required"),
+  rental_type: z.enum(['Daily', 'Weekly', 'Monthly'], { required_error: "Rental type is required" }),
   start_date: z.date(),
   end_date: z.date(),
-  monthly_amount: z.coerce.number().min(1, "Monthly amount must be at least £1"),
+  monthly_amount: z.coerce.number().min(1, "Rental amount must be at least £1"),
   initial_fee: z.coerce.number().min(0, "Initial fee cannot be negative").optional(),
 }).refine((data) => {
-  const monthAfterStart = addMonths(data.start_date, 1);
-  return isAfter(data.end_date, monthAfterStart) || data.end_date.getTime() === monthAfterStart.getTime();
+  // Dynamic end date validation based on rental type
+  let minEndDate: Date;
+  switch (data.rental_type) {
+    case 'Daily':
+      minEndDate = addDays(data.start_date, 1);
+      break;
+    case 'Weekly':
+      minEndDate = addDays(data.start_date, 7);
+      break;
+    case 'Monthly':
+    default:
+      minEndDate = addMonths(data.start_date, 1);
+      break;
+  }
+  return isAfter(data.end_date, minEndDate) || data.end_date.getTime() === minEndDate.getTime();
 }, {
-  message: "End date must be at least 1 month after start date",
+  message: "End date must be at least 1 day (Daily), 1 week (Weekly), or 1 month (Monthly) after start date",
   path: ["end_date"],
 });
 
@@ -45,8 +61,12 @@ const CreateRental = () => {
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string>("");
   const [showDocuSignDialog, setShowDocuSignDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [createdRental, setCreatedRental] = useState<any>(null);
   const [sendingDocuSign, setSendingDocuSign] = useState(false);
+
+  const { createInvoice, isCreating: isCreatingInvoice } = useInvoices();
 
   const today = new Date();
   const todayAtMidnight = startOfDay(today);
@@ -57,6 +77,7 @@ const CreateRental = () => {
     defaultValues: {
       customer_id: "",
       vehicle_id: "",
+      rental_type: undefined,
       start_date: today,
       end_date: defaultEndDate,
       monthly_amount: undefined,
@@ -69,6 +90,7 @@ const CreateRental = () => {
   const watchedValues = form.watch();
   const selectedCustomerId = watchedValues.customer_id;
   const selectedVehicleId = watchedValues.vehicle_id;
+  const selectedRentalType = watchedValues.rental_type;
 
   // Get customers and available vehicles
   const { data: customers } = useQuery({
@@ -91,7 +113,7 @@ const CreateRental = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, reg, make, model")
+        .select("id, reg, make, model, daily_rate, weekly_rate, monthly_rate")
         .eq("status", "Available");
       if (error) throw error;
       return data;
@@ -101,7 +123,54 @@ const CreateRental = () => {
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
   const selectedVehicle = vehicles?.find(v => v.id === selectedVehicleId);
 
+  // Auto-populate rental amount when vehicle or rental type changes
+  useEffect(() => {
+    if (selectedVehicle && selectedRentalType) {
+      let rate: number | undefined;
+      switch (selectedRentalType) {
+        case 'Daily':
+          rate = selectedVehicle.daily_rate ?? undefined;
+          break;
+        case 'Weekly':
+          rate = selectedVehicle.weekly_rate ?? undefined;
+          break;
+        case 'Monthly':
+          rate = selectedVehicle.monthly_rate ?? undefined;
+          break;
+      }
+      if (rate !== undefined) {
+        form.setValue('monthly_amount', rate);
+      }
+    }
+  }, [selectedVehicleId, selectedRentalType, selectedVehicle, form]);
+
+  // Set default end date when rental type changes
+  useEffect(() => {
+    if (selectedRentalType) {
+      const startDate = form.getValues('start_date') || today;
+      let defaultEnd: Date;
+      switch (selectedRentalType) {
+        case 'Daily':
+          defaultEnd = addDays(startDate, 1);
+          break;
+        case 'Weekly':
+          defaultEnd = addDays(startDate, 7);
+          break;
+        case 'Monthly':
+        default:
+          defaultEnd = addMonths(startDate, 1);
+          break;
+      }
+      form.setValue('end_date', defaultEnd);
+      // Re-trigger end_date validation after a short delay
+      setTimeout(() => form.trigger('end_date'), 0);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRentalType]);
+
   const onSubmit = async (data: RentalFormData) => {
+    console.log('=== FORM SUBMITTED ===');
+    console.log('Form data:', data);
     setLoading(true);
     setSubmitError("");
     try {
@@ -109,7 +178,7 @@ const CreateRental = () => {
       if (!data.customer_id || !data.vehicle_id) {
         throw new Error("Customer and Vehicle must be selected");
       }
-      
+
       if (data.monthly_amount <= 0) {
         throw new Error("Monthly amount must be greater than 0");
       }
@@ -211,7 +280,59 @@ const CreateRental = () => {
         customerEmail: selectedCustomer?.email,
         vehicleReg
       });
-      setShowDocuSignDialog(true);
+
+      // Generate invoice for this rental
+      try {
+        const lineItems: InvoiceLineItem[] = [
+          {
+            description: `Monthly Rental Fee\n${selectedVehicle?.make} ${selectedVehicle?.model} (${vehicleReg})`,
+            quantity: 1,
+            unit_price: data.monthly_amount,
+            amount: data.monthly_amount,
+          },
+        ];
+
+        // Add initial fee as line item if present
+        if (data.initial_fee && data.initial_fee > 0) {
+          lineItems.push({
+            description: `Initial Fee / Deposit`,
+            quantity: 1,
+            unit_price: data.initial_fee,
+            amount: data.initial_fee,
+          });
+        }
+
+        const invoice = await createInvoice({
+          rental_id: rental.id,
+          customer_id: data.customer_id,
+          vehicle_id: data.vehicle_id,
+          due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"),
+          customer_name: customerName,
+          customer_email: selectedCustomer?.email,
+          customer_phone: selectedCustomer?.phone,
+          vehicle_reg: vehicleReg,
+          vehicle_make: selectedVehicle?.make,
+          vehicle_model: selectedVehicle?.model,
+          rental_start_date: data.start_date.toISOString().split('T')[0],
+          rental_end_date: data.end_date.toISOString().split('T')[0],
+          line_items: lineItems,
+          notes: `Monthly rental fee for ${selectedVehicle?.make} ${selectedVehicle?.model} (${vehicleReg})`,
+        });
+
+        setCreatedInvoice(invoice);
+        // Show invoice dialog first - DocuSign will show after invoice is closed
+        setShowInvoiceDialog(true);
+      } catch (invoiceError) {
+        console.error("Error creating invoice:", invoiceError);
+        // Still show DocuSign dialog even if invoice creation fails
+        toast({
+          title: "Invoice Creation Failed",
+          description: "Rental was created but invoice could not be generated.",
+          variant: "destructive",
+        });
+        // Show DocuSign dialog directly if invoice fails
+        setShowDocuSignDialog(true);
+      }
     } catch (error: any) {
       console.error("Error creating rental:", error);
       
@@ -341,7 +462,13 @@ const CreateRental = () => {
               )}
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(
+                  onSubmit,
+                  (errors) => {
+                    console.log('=== VALIDATION FAILED ===');
+                    console.log('Validation errors:', errors);
+                  }
+                )} className="space-y-6">
                   {/* Customer and Vehicle Selection */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -402,6 +529,39 @@ const CreateRental = () => {
                     />
                   </div>
 
+                  {/* Rental Type */}
+                  <FormField
+                    control={form.control}
+                    name="rental_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rental Type *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className={form.formState.errors.rental_type ? "border-destructive" : ""}>
+                              <SelectValue placeholder="Select rental type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Daily">Daily</SelectItem>
+                            <SelectItem value="Weekly">Weekly</SelectItem>
+                            <SelectItem value="Monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        {selectedVehicle && selectedRentalType && (
+                          <FormDescription>
+                            Rate from vehicle: £{
+                              selectedRentalType === 'Daily' ? selectedVehicle.daily_rate :
+                              selectedRentalType === 'Weekly' ? selectedVehicle.weekly_rate :
+                              selectedVehicle.monthly_rate
+                            } / {selectedRentalType.toLowerCase()}
+                          </FormDescription>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
                   {/* Dates */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -442,18 +602,34 @@ const CreateRental = () => {
                               date={field.value}
                               onSelect={field.onChange}
                               placeholder="Select end date"
-                              disabled={(date) => 
-                                watchedValues.start_date 
-                                  ? isBefore(date, addMonths(watchedValues.start_date, 1))
-                                  : false
-                              }
+                              disabled={(date) => {
+                                if (!watchedValues.start_date) return false;
+                                let minDate: Date;
+                                switch (selectedRentalType) {
+                                  case 'Daily':
+                                    minDate = addDays(watchedValues.start_date, 1);
+                                    break;
+                                  case 'Weekly':
+                                    minDate = addDays(watchedValues.start_date, 7);
+                                    break;
+                                  case 'Monthly':
+                                  default:
+                                    minDate = addMonths(watchedValues.start_date, 1);
+                                    break;
+                                }
+                                return isBefore(date, minDate);
+                              }}
                               error={!!form.formState.errors.end_date}
                               className="w-full"
                             />
                           </FormControl>
                           <FormMessage />
                           <FormDescription>
-                            Must be at least 1 month after start date
+                            Must be at least {
+                              selectedRentalType === 'Daily' ? '1 day' :
+                              selectedRentalType === 'Weekly' ? '1 week' :
+                              '1 month'
+                            } after start date
                           </FormDescription>
                         </FormItem>
                       )}
@@ -467,18 +643,26 @@ const CreateRental = () => {
                       name="monthly_amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Monthly Amount *</FormLabel>
+                          <FormLabel>
+                            {selectedRentalType === 'Daily' ? 'Daily' :
+                             selectedRentalType === 'Weekly' ? 'Weekly' :
+                             'Monthly'} Amount *
+                          </FormLabel>
                           <FormControl>
                             <CurrencyInput
                               value={field.value}
                               onChange={field.onChange}
-                              placeholder="Monthly rental amount"
+                              placeholder="Select vehicle and rental type"
                               min={1}
                               step={1}
                               error={!!form.formState.errors.monthly_amount}
+                              disabled={true}
                             />
                           </FormControl>
                           <FormMessage />
+                          <FormDescription>
+                            Auto-filled from vehicle rates
+                          </FormDescription>
                         </FormItem>
                       )}
                     />
@@ -593,6 +777,21 @@ const CreateRental = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Invoice Dialog */}
+      <InvoiceDialog
+        invoice={createdInvoice}
+        open={showInvoiceDialog}
+        onOpenChange={(open) => {
+          setShowInvoiceDialog(open);
+          // When invoice dialog closes, show DocuSign dialog
+          if (!open && createdRental) {
+            setShowDocuSignDialog(true);
+          }
+        }}
+        companyName="RTech Group UK"
+        companyAddress="Vehicle Rental Services"
+      />
     </div>
   );
 };

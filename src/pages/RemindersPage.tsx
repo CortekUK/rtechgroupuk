@@ -125,12 +125,16 @@ export default function RemindersPage() {
       "Delivered": "default",
       "Snoozed": "outline",
       "Dismissed": "secondary",
-      "Done": "default"
+      "Done": "default",
+      "pending": "secondary",
     } as const;
-    
+
+    // Capitalize first letter of status
+    const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+
     return (
       <Badge variant={variants[status as keyof typeof variants] || "secondary"}>
-        {status}
+        {capitalizedStatus}
       </Badge>
     );
   };

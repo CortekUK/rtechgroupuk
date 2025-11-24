@@ -40,7 +40,8 @@ const Reports = () => {
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewReportId, setPreviewReportId] = useState<string>('');
   const [showAgingDetail, setShowAgingDetail] = useState(false);
-  
+  const [isExporting, setIsExporting] = useState<string | null>(null);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -56,11 +57,15 @@ const Reports = () => {
     });
   };
 
-  const handleExport = async (reportType: string, exportFormat: 'csv' | 'xlsx' | 'pdf') => {
+  const handleExport = async (reportType: string) => {
+    if (isExporting) return;
+
+    setIsExporting(reportType);
+
     try {
       const exportData = {
         reportType,
-        exportType: exportFormat,
+        exportType: 'csv',
         filters: {
           ...filters,
           fromDate: format(filters.fromDate, 'yyyy-MM-dd'),
@@ -77,14 +82,12 @@ const Reports = () => {
       // Create download with proper file naming
       const fromDateStr = format(filters.fromDate, 'yyyy-MM-dd');
       const toDateStr = format(filters.toDate, 'yyyy-MM-dd');
-      const filename = `${reportType}_${fromDateStr}_${toDateStr}.${exportFormat}`;
+      const filename = `${reportType}_${fromDateStr}_${toDateStr}.csv`;
 
-      const blob = new Blob([data.content], { 
-        type: exportFormat === 'pdf' ? 'application/pdf' : 
-              exportFormat === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
-              'text/csv'
+      const blob = new Blob([data.content], {
+        type: 'text/csv'
       });
-      
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -96,7 +99,7 @@ const Reports = () => {
 
       toast({
         title: 'Export successful',
-        description: `${reportType.replace('-', ' ')} exported as ${exportFormat.toUpperCase()}`
+        description: `${reportType.replace('-', ' ')} exported as CSV`
       });
 
     } catch (error) {
@@ -106,6 +109,8 @@ const Reports = () => {
         description: 'There was an error generating the export. Please try again.',
         variant: 'destructive'
       });
+    } finally {
+      setIsExporting(null);
     }
   };
 
@@ -122,11 +127,23 @@ const Reports = () => {
       const toDate = format(filters.toDate, 'yyyy-MM-dd');
 
       // Get payments count and total
-      const { data: payments } = await supabase
+      let paymentsQuery = supabase
         .from('view_payments_export')
         .select('amount, applied_amount, unapplied_amount')
         .gte('payment_date', fromDate)
         .lte('payment_date', toDate);
+
+      if (filters.customers.length > 0) {
+        paymentsQuery = paymentsQuery.in('customer_id', filters.customers);
+      }
+      if (filters.vehicles.length > 0) {
+        paymentsQuery = paymentsQuery.in('vehicle_id', filters.vehicles);
+      }
+      if (filters.paymentTypes.length > 0) {
+        paymentsQuery = paymentsQuery.in('payment_type', filters.paymentTypes);
+      }
+
+      const { data: payments } = await paymentsQuery;
 
       // Get P&L totals
       const { data: plData } = await supabase
@@ -135,23 +152,53 @@ const Reports = () => {
         .single();
 
       // Get rentals count
-      const { data: rentals } = await supabase
+      let rentalsQuery = supabase
         .from('view_rentals_export')
         .select('rental_id, balance')
         .gte('start_date', fromDate)
         .lte('start_date', toDate);
 
+      if (filters.customers.length > 0) {
+        rentalsQuery = rentalsQuery.in('customer_id', filters.customers);
+      }
+      if (filters.vehicles.length > 0) {
+        rentalsQuery = rentalsQuery.in('vehicle_id', filters.vehicles);
+      }
+      if (filters.statuses.length > 0) {
+        rentalsQuery = rentalsQuery.in('status', filters.statuses);
+      }
+
+      const { data: rentals } = await rentalsQuery;
+
       // Get aging receivables
-      const { data: aging } = await supabase
+      let agingQuery = supabase
         .from('view_aging_receivables')
         .select('*');
 
+      if (filters.customers.length > 0) {
+        agingQuery = agingQuery.in('customer_id', filters.customers);
+      }
+
+      const { data: aging } = await agingQuery;
+
       // Get fines data
-      const { data: fines } = await supabase
+      let finesQuery = supabase
         .from('view_fines_export')
         .select('fine_id, amount, remaining_amount')
         .gte('issue_date', fromDate)
         .lte('issue_date', toDate);
+
+      if (filters.customers.length > 0) {
+        finesQuery = finesQuery.in('customer_id', filters.customers);
+      }
+      if (filters.vehicles.length > 0) {
+        finesQuery = finesQuery.in('vehicle_id', filters.vehicles);
+      }
+      if (filters.statuses.length > 0) {
+        finesQuery = finesQuery.in('status', filters.statuses);
+      }
+
+      const { data: fines } = await finesQuery;
 
       return {
         payments: {
@@ -282,7 +329,7 @@ const Reports = () => {
             Generate detailed reports and export data across your fleet
           </p>
         </div>
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={clearAllFilters}
@@ -291,7 +338,7 @@ const Reports = () => {
         >
           <Calendar className="h-4 w-4 mr-2" />
           {format(filters.fromDate, 'dd/MM/yyyy')} - {format(filters.toDate, 'dd/MM/yyyy')}
-        </Button>
+        </Button> */}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -344,7 +391,8 @@ const Reports = () => {
                             openPreviewModal(report.id);
                           }
                         }}
-                        onExport={(exportFormat) => handleExport(report.id, exportFormat)}
+                        onExport={() => handleExport(report.id)}
+                        isExporting={isExporting === report.id}
                       />
                     ))}
                   </div>
@@ -382,7 +430,8 @@ const Reports = () => {
         reportId={previewReportId}
         reportTitle={reportCards.find(r => r.id === previewReportId)?.title || ''}
         filters={filters}
-        onExport={(exportFormat) => handleExport(previewReportId, exportFormat)}
+        onExport={() => handleExport(previewReportId)}
+        isExporting={isExporting === previewReportId}
       />
     </div>
   );

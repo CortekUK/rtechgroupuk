@@ -52,10 +52,16 @@ export const DataTable: React.FC<DataTableProps> = ({ reportType, filters }) => 
         }
 
         case 'pl-report': {
-          const { data, error } = await supabase
+          let query = supabase
             .from('view_pl_by_vehicle')
             .select('*')
             .range(offset, offset + ROWS_PER_PAGE - 1);
+
+          if (filters.vehicles.length > 0) {
+            query = query.in('vehicle_id', filters.vehicles);
+          }
+
+          const { data, error } = await query;
           if (error) throw error;
           return data;
         }
@@ -69,7 +75,13 @@ export const DataTable: React.FC<DataTableProps> = ({ reportType, filters }) => 
             .range(offset, offset + ROWS_PER_PAGE - 1);
 
           if (filters.customers.length > 0) {
-            // Note: would need to join on customer name for this filter
+            query = query.in('customer_id', filters.customers);
+          }
+          if (filters.vehicles.length > 0) {
+            query = query.in('vehicle_id', filters.vehicles);
+          }
+          if (filters.statuses.length > 0) {
+            query = query.in('status', filters.statuses);
           }
 
           const { data, error } = await query;
@@ -103,7 +115,13 @@ export const DataTable: React.FC<DataTableProps> = ({ reportType, filters }) => 
             .range(offset, offset + ROWS_PER_PAGE - 1);
 
           if (filters.customers.length > 0) {
-            // Filtering will need to be done by customer_name for this view
+            query = query.in('customer_id', filters.customers);
+          }
+          if (filters.vehicles.length > 0) {
+            query = query.in('vehicle_id', filters.vehicles);
+          }
+          if (filters.statuses.length > 0) {
+            query = query.in('status', filters.statuses);
           }
 
           const { data, error } = await query;
@@ -112,10 +130,16 @@ export const DataTable: React.FC<DataTableProps> = ({ reportType, filters }) => 
         }
 
         case 'aging': {
-          const { data, error } = await supabase
+          let query = supabase
             .from('view_aging_receivables')
             .select('*')
             .range(offset, offset + ROWS_PER_PAGE - 1);
+
+          if (filters.customers.length > 0) {
+            query = query.in('customer_id', filters.customers);
+          }
+
+          const { data, error } = await query;
           if (error) throw error;
           return data;
         }

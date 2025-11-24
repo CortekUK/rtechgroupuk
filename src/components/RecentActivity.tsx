@@ -22,10 +22,13 @@ const StatusBadge = ({ status }: { status: string }) => {
     pending: "badge-status bg-warning-light text-warning border-warning",
     warning: "badge-status bg-destructive-light text-destructive border-destructive"
   };
-  
+
+  // Capitalize first letter
+  const displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+
   return (
     <Badge variant="outline" className={variants[status as keyof typeof variants]}>
-      {status}
+      {displayStatus}
     </Badge>
   );
 };

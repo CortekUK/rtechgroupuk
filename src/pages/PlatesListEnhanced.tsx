@@ -436,7 +436,7 @@ export default function PlatesListEnhanced() {
                 <TableHead>Vehicle</TableHead>
                 <TableHead>Supplier</TableHead>
                 <TableHead>Order Date</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
+                <TableHead className="text-left">Cost</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead>Document</TableHead>
@@ -512,7 +512,7 @@ export default function PlatesListEnhanced() {
                     <TableCell>
                       {plate.order_date ? format(new Date(plate.order_date), "MM/dd/yyyy") : "-"}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-left">
                       {plate.cost ? `£${Number(plate.cost).toFixed(2)}` : "-"}
                     </TableCell>
                     <TableCell>

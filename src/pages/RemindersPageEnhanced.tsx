@@ -485,7 +485,7 @@ export default function RemindersPageEnhanced() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={STATUS_COLORS[reminder.status as keyof typeof STATUS_COLORS]}>
-                          {reminder.status}
+                          {reminder.status.charAt(0).toUpperCase() + reminder.status.slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell>

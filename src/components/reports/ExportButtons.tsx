@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { Download, FileText, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,18 +15,18 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
   reportType,
   filters
 }) => {
-  const [isExporting, setIsExporting] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
-  const handleExport = async (exportType: 'csv' | 'xlsx' | 'pdf') => {
+  const handleExport = async () => {
     if (isExporting) return;
 
-    setIsExporting(exportType);
-    
+    setIsExporting(true);
+
     try {
       const exportData = {
         reportType,
-        exportType,
+        exportType: 'csv',
         filters: {
           ...filters,
           fromDate: format(filters.fromDate, 'yyyy-MM-dd'),
@@ -41,12 +41,10 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
       if (error) throw error;
 
       // Create download link
-      const blob = new Blob([data.content], { 
-        type: exportType === 'pdf' ? 'application/pdf' : 
-              exportType === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
-              'text/csv'
+      const blob = new Blob([data.content], {
+        type: 'text/csv'
       });
-      
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -58,7 +56,7 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
 
       toast({
         title: 'Export successful',
-        description: `${reportType.replace('-', ' ')} exported as ${exportType.toUpperCase()}`
+        description: `${reportType.replace('-', ' ')} exported as CSV`
       });
 
     } catch (error) {
@@ -69,58 +67,24 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
         variant: 'destructive'
       });
     } finally {
-      setIsExporting(null);
+      setIsExporting(false);
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => handleExport('csv')}
-        disabled={isExporting !== null}
-        className="text-xs"
-      >
-        {isExporting === 'csv' ? (
-          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-        ) : (
-          <Download className="h-3 w-3 mr-1" />
-        )}
-        CSV
-      </Button>
-      
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => handleExport('xlsx')}
-        disabled={isExporting !== null}
-        className="text-xs"
-      >
-        {isExporting === 'xlsx' ? (
-          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-        ) : (
-          <FileSpreadsheet className="h-3 w-3 mr-1" />
-        )}
-        XLSX
-      </Button>
-
-      {reportType === 'customer-statements' && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleExport('pdf')}
-          disabled={isExporting !== null}
-          className="text-xs"
-        >
-          {isExporting === 'pdf' ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <FileText className="h-3 w-3 mr-1" />
-          )}
-          PDF
-        </Button>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleExport}
+      disabled={isExporting}
+      className="text-xs"
+    >
+      {isExporting ? (
+        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+      ) : (
+        <Download className="h-3 w-3 mr-1" />
       )}
-    </div>
+      {isExporting ? 'Downloading...' : 'Download'}
+    </Button>
   );
 };

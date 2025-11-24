@@ -204,10 +204,10 @@ const RentalsList = () => {
                       <TableHead>Start Date</TableHead>
                       <TableHead>End Date</TableHead>
                       <TableHead>Duration</TableHead>
-                      <TableHead className="text-right">Initial Payment</TableHead>
-                      <TableHead className="text-right">Monthly Amount</TableHead>
+                      <TableHead className="text-left">Initial Payment</TableHead>
+                      <TableHead className="text-left">Monthly Amount</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-left">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -243,10 +243,10 @@ const RentalsList = () => {
                         <TableCell>{new Date(rental.start_date).toLocaleDateString()}</TableCell>
                         <TableCell>{rental.end_date ? new Date(rental.end_date).toLocaleDateString() : '—'}</TableCell>
                         <TableCell>{formatDuration(rental.duration_months)}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-left">
                           {rental.initial_payment ? `£${Number(rental.initial_payment).toLocaleString()}` : '—'}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-left">
                           £{Number(rental.monthly_amount).toLocaleString()}
                         </TableCell>
                         <TableCell>
