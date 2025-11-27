@@ -36,8 +36,8 @@ export function useReminders(filters?: ReminderFilters) {
       let query = supabase
         .from('reminders')
         .select('*')
-        .order('due_on', { ascending: true })
-        .order('remind_on', { ascending: true });
+        .order('created_at', { ascending: false })
+        .order('due_on', { ascending: true });
 
       // If no status filter is applied, default to showing active reminders
       if (filters?.status && filters.status.length > 0) {
@@ -74,8 +74,14 @@ export function useReminders(filters?: ReminderFilters) {
         throw new Error('Failed to fetch reminders');
       }
 
-      // Sort by severity priority: critical (1), warning (2), info (3)
+      // Sort by created_at descending (latest first), then by severity priority
       const sortedData = (data as Reminder[]).sort((a, b) => {
+        // First sort by created_at descending (latest first)
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+
+        // Then by severity priority: critical (1), warning (2), info (3)
         const severityOrder = { critical: 1, warning: 2, info: 3 };
         return severityOrder[a.severity] - severityOrder[b.severity];
       });
@@ -95,6 +101,7 @@ export function useRemindersByObject(objectType: string, objectId: string) {
         .eq('object_type', objectType)
         .eq('object_id', objectId)
         .in('status', ['pending', 'sent', 'snoozed'])
+        .order('created_at', { ascending: false })
         .order('due_on', { ascending: true });
 
       if (error) {
@@ -102,8 +109,14 @@ export function useRemindersByObject(objectType: string, objectId: string) {
         throw new Error('Failed to fetch reminders');
       }
 
-      // Sort by severity priority: critical (1), warning (2), info (3)
+      // Sort by created_at descending (latest first), then by severity priority
       const sortedData = (data as Reminder[]).sort((a, b) => {
+        // First sort by created_at descending (latest first)
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+
+        // Then by severity priority: critical (1), warning (2), info (3)
         const severityOrder = { critical: 1, warning: 2, info: 3 };
         return severityOrder[a.severity] - severityOrder[b.severity];
       });

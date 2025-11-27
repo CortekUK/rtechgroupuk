@@ -70,6 +70,17 @@ function getTitleTemplate(ruleCode: string, context: ReminderContext): string {
     IMM_FIT_7D: (ctx) => `Fit immobiliser — ${ctx.reg} (7 days since acquisition)`,
     IMM_FIT_0D: (ctx) => `Fit immobiliser — ${ctx.reg} (overdue)`,
     
+    // Payment Due reminders
+    PAY_DUE_7D: (ctx) => `Payment due soon — ${ctx.customer_name} (${ctx.reg}) - 7 days`,
+    PAY_DUE_3D: (ctx) => `Payment due soon — ${ctx.customer_name} (${ctx.reg}) - 3 days`,
+    PAY_DUE_1D: (ctx) => `Payment due tomorrow — ${ctx.customer_name} (${ctx.reg})`,
+    PAY_DUE_0D: (ctx) => `Payment due today — ${ctx.customer_name} (${ctx.reg})`,
+
+    // Payment Overdue reminders
+    PAY_OVERDUE_1D: (ctx) => `Payment overdue — ${ctx.customer_name} (${ctx.reg}) - 1 day`,
+    PAY_OVERDUE_7D: (ctx) => `Payment overdue — ${ctx.customer_name} (${ctx.reg}) - 7 days`,
+    PAY_OVERDUE_14D: (ctx) => `Payment overdue — ${ctx.customer_name} (${ctx.reg}) - 14+ days`,
+
     // Legacy codes for backward compatibility
     VEH_MOT_30D: (ctx) => `MOT due soon — ${ctx.reg} (30 days)`,
     VEH_MOT_14D: (ctx) => `MOT due soon — ${ctx.reg} (14 days)`,
@@ -146,6 +157,17 @@ function getMessageTemplate(ruleCode: string, context: ReminderContext): string 
     IMM_FIT_7D: (ctx) => `Vehicle ${ctx.reg} (${ctx.make} ${ctx.model}) urgently needs an immobiliser fitted - ${ctx.days_until || 0} days since acquisition.`,
     IMM_FIT_0D: (ctx) => `Vehicle ${ctx.reg} (${ctx.make} ${ctx.model}) is overdue for immobiliser fitting - acquired ${ctx.days_until || 0} days ago. Immediate action required!`,
     
+    // Payment Due message templates
+    PAY_DUE_7D: (ctx) => `Payment of ${formatCurrency(ctx.amount || 0)} for ${ctx.customer_name} (${ctx.reg}) is due on ${ctx.due_date}. Please ensure payment is collected.`,
+    PAY_DUE_3D: (ctx) => `Payment of ${formatCurrency(ctx.amount || 0)} for ${ctx.customer_name} (${ctx.reg}) is due on ${ctx.due_date}. Payment due in 3 days.`,
+    PAY_DUE_1D: (ctx) => `Payment of ${formatCurrency(ctx.amount || 0)} for ${ctx.customer_name} (${ctx.reg}) is due tomorrow (${ctx.due_date}). Urgent collection required.`,
+    PAY_DUE_0D: (ctx) => `Payment of ${formatCurrency(ctx.amount || 0)} for ${ctx.customer_name} (${ctx.reg}) is due today (${ctx.due_date}). Immediate collection required!`,
+
+    // Payment Overdue message templates
+    PAY_OVERDUE_1D: (ctx) => `Payment of ${formatCurrency(ctx.amount || 0)} for ${ctx.customer_name} (${ctx.reg}) is 1 day overdue (was due ${ctx.due_date}). Contact customer immediately.`,
+    PAY_OVERDUE_7D: (ctx) => `Payment of ${formatCurrency(ctx.amount || 0)} for ${ctx.customer_name} (${ctx.reg}) is ${ctx.days_overdue} days overdue (was due ${ctx.due_date}). Escalate collection.`,
+    PAY_OVERDUE_14D: (ctx) => `Payment of ${formatCurrency(ctx.amount || 0)} for ${ctx.customer_name} (${ctx.reg}) is ${ctx.days_overdue} days overdue (was due ${ctx.due_date}). Consider further action.`,
+
     // Legacy codes for backward compatibility
     VEH_MOT_30D: (ctx) => `MOT for ${ctx.reg} (${ctx.make} ${ctx.model}) due on ${ctx.due_date}. Please book test soon.`,
     VEH_MOT_14D: (ctx) => `MOT for ${ctx.reg} (${ctx.make} ${ctx.model}) due on ${ctx.due_date}. Please book test immediately.`,
@@ -716,6 +738,125 @@ serve(async (req) => {
 
           if (!reminderError) {
             totalGenerated++;
+          }
+        }
+      }
+    }
+
+    // 5. Generate Payment Due and Overdue reminders
+    // Get all charges with remaining balance from active rentals
+    const paymentDueRules = rulesByType['Payment'] || [];
+    const paymentOverdueRules = rulesByType['Overdue'] || [];
+
+    if (paymentDueRules.length > 0 || paymentOverdueRules.length > 0) {
+      console.log('Generating payment reminders...');
+
+      // Query charges with remaining balance for active rentals
+      const { data: unpaidCharges, error: chargesError } = await supabase
+        .from('ledger_entries')
+        .select(`
+          id,
+          rental_id,
+          customer_id,
+          vehicle_id,
+          due_date,
+          amount,
+          remaining_amount,
+          category,
+          reference,
+          rentals!inner(id, status),
+          customers!inner(id, name),
+          vehicles!inner(id, reg, make, model)
+        `)
+        .eq('type', 'Charge')
+        .gt('remaining_amount', 0)
+        .eq('rentals.status', 'Active');
+
+      if (chargesError) {
+        console.error('Error fetching unpaid charges:', chargesError);
+      } else if (unpaidCharges && unpaidCharges.length > 0) {
+        console.log(`Found ${unpaidCharges.length} unpaid charges to process`);
+
+        for (const charge of unpaidCharges) {
+          const dueDate = new Date(charge.due_date);
+          const todayDate = new Date(today);
+          const daysDiff = Math.floor((dueDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          const context: ReminderContext = {
+            customer_id: charge.customer_id,
+            customer_name: charge.customers?.name,
+            vehicle_id: charge.vehicle_id,
+            reg: charge.vehicles?.reg,
+            make: charge.vehicles?.make,
+            model: charge.vehicles?.model,
+            rental_id: charge.rental_id,
+            due_date: charge.due_date,
+            amount: parseFloat(charge.remaining_amount),
+            days_until: daysDiff > 0 ? daysDiff : 0,
+            days_overdue: daysDiff < 0 ? Math.abs(daysDiff) : 0
+          };
+
+          let selectedRule = null;
+
+          if (daysDiff >= 0) {
+            // Payment is upcoming or due today - find the best Payment rule
+            // We want the smallest lead_days that is >= daysDiff
+            for (const rule of paymentDueRules.sort((a, b) => a.lead_days - b.lead_days)) {
+              if (daysDiff <= rule.lead_days) {
+                selectedRule = rule;
+                break;
+              }
+            }
+          } else {
+            // Payment is overdue - find the best Overdue rule
+            const daysOverdue = Math.abs(daysDiff);
+            // Find the rule with highest lead_days that is <= daysOverdue
+            for (const rule of paymentOverdueRules.sort((a, b) => b.lead_days - a.lead_days)) {
+              if (daysOverdue >= rule.lead_days) {
+                selectedRule = rule;
+                break;
+              }
+            }
+          }
+
+          if (selectedRule) {
+            // Check if reminder already exists and is snoozed
+            const { data: existingReminder } = await supabase
+              .from('reminders')
+              .select('id, status')
+              .eq('rule_code', selectedRule.rule_code)
+              .eq('object_type', 'Rental')
+              .eq('object_id', charge.rental_id)
+              .eq('due_on', charge.due_date)
+              .maybeSingle();
+
+            // Skip if reminder exists and is snoozed
+            if (existingReminder && existingReminder.status === 'snoozed') {
+              continue;
+            }
+
+            const { error: reminderError } = await supabase
+              .from('reminders')
+              .upsert({
+                rule_code: selectedRule.rule_code,
+                object_type: 'Rental',
+                object_id: charge.rental_id,
+                title: getTitleTemplate(selectedRule.rule_code, context),
+                message: getMessageTemplate(selectedRule.rule_code, context),
+                due_on: charge.due_date,
+                remind_on: today,
+                severity: selectedRule.severity,
+                context: context,
+                status: 'pending'
+              }, {
+                onConflict: 'rule_code,object_type,object_id,due_on,remind_on'
+              });
+
+            if (!reminderError) {
+              totalGenerated++;
+            } else {
+              console.error('Error creating payment reminder:', reminderError);
+            }
           }
         }
       }

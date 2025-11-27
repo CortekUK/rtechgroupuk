@@ -258,6 +258,15 @@ const CreateRental = () => {
       // Generate only first month's charge (subsequent charges created monthly)
       await supabase.rpc("backfill_rental_charges_first_month_only");
 
+      // Generate payment reminders for the new rental charges
+      try {
+        await supabase.functions.invoke('reminders-generate');
+        console.log('Reminders generated for new rental');
+      } catch (reminderError) {
+        console.error('Failed to generate reminders:', reminderError);
+        // Don't throw - rental was created successfully, reminders are secondary
+      }
+
       const customerName = selectedCustomer?.name || "Customer";
       const vehicleReg = selectedVehicle?.reg || "Vehicle";
 
