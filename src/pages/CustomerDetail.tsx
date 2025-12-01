@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +52,8 @@ interface Customer {
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>();
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -164,6 +168,95 @@ const CustomerDetail = () => {
             <Edit className="h-4 w-4 mr-2" />
             Edit Customer
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete {customer.name}?
+                  This action cannot be undone and will remove all associated rentals, payments, fines, and documents.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    try {
+                      // Delete related records first due to foreign key constraints
+                      // Get all rentals for this customer
+                      const { data: customerRentals } = await supabase
+                        .from("rentals")
+                        .select("id, vehicle_id")
+                        .eq("customer_id", customer.id);
+
+                      if (customerRentals) {
+                        for (const rental of customerRentals) {
+                          // Delete ledger entries for each rental
+                          await supabase.from("ledger_entries").delete().eq("rental_id", rental.id);
+                          // Delete reminder related tables
+                          await supabase.from("reminder_actions").delete().eq("rental_id", rental.id);
+                          await supabase.from("reminder_emails").delete().eq("rental_id", rental.id);
+                          await supabase.from("reminder_events").delete().eq("rental_id", rental.id);
+                          await supabase.from("reminder_logs").delete().eq("rental_id", rental.id);
+                          await supabase.from("reminders").delete().eq("rental_id", rental.id);
+                          // Delete payment applications for each rental
+                          await supabase.from("payment_applications").delete().eq("rental_id", rental.id);
+                          // Delete charges for each rental
+                          await supabase.from("charges").delete().eq("rental_id", rental.id);
+                          // Delete invoices for each rental
+                          await supabase.from("invoices").delete().eq("rental_id", rental.id);
+                          // Update vehicle status back to Available
+                          if (rental.vehicle_id) {
+                            await supabase
+                              .from("vehicles")
+                              .update({ status: "Available" })
+                              .eq("id", rental.vehicle_id);
+                          }
+                        }
+                        // Delete all rentals
+                        await supabase.from("rentals").delete().eq("customer_id", customer.id);
+                      }
+
+                      // Delete payments for this customer
+                      await supabase.from("payments").delete().eq("customer_id", customer.id);
+                      // Delete fines for this customer
+                      await supabase.from("fines").delete().eq("customer_id", customer.id);
+                      // Delete customer documents
+                      await supabase.from("customer_documents").delete().eq("customer_id", customer.id);
+                      // Finally delete the customer
+                      const { error } = await supabase.from("customers").delete().eq("id", customer.id);
+                      if (error) throw error;
+
+                      toast({
+                        title: "Customer Deleted",
+                        description: `${customer.name} has been deleted successfully.`,
+                      });
+
+                      // Invalidate queries and navigate back
+                      queryClient.invalidateQueries({ queryKey: ["customers-list"] });
+                      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
+                      navigate("/customers");
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to delete customer",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Delete Customer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

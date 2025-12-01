@@ -390,6 +390,84 @@ export default function VehicleDetail() {
         </div>
         <div className="flex items-center gap-2">
           <EditVehicleDialog vehicle={vehicle} />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Vehicle</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete {vehicle.reg} ({vehicle.make} {vehicle.model})?
+                  This action cannot be undone and will remove all associated data including rentals, payments, and service records.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    try {
+                      // Delete related records first due to foreign key constraints
+                      // Delete payment applications
+                      await supabase.from("payment_applications").delete().eq("vehicle_id", vehicle.id);
+                      // Delete payments
+                      await supabase.from("payments").delete().eq("vehicle_id", vehicle.id);
+                      // Delete charges via rentals
+                      const { data: vehicleRentals } = await supabase
+                        .from("rentals")
+                        .select("id")
+                        .eq("vehicle_id", vehicle.id);
+                      if (vehicleRentals) {
+                        for (const rental of vehicleRentals) {
+                          await supabase.from("charges").delete().eq("rental_id", rental.id);
+                        }
+                      }
+                      // Delete rentals
+                      await supabase.from("rentals").delete().eq("vehicle_id", vehicle.id);
+                      // Delete fines
+                      await supabase.from("fines").delete().eq("vehicle_id", vehicle.id);
+                      // Delete service records
+                      await supabase.from("service_records").delete().eq("vehicle_id", vehicle.id);
+                      // Delete vehicle expenses
+                      await supabase.from("vehicle_expenses").delete().eq("vehicle_id", vehicle.id);
+                      // Delete vehicle files
+                      await supabase.from("vehicle_files").delete().eq("vehicle_id", vehicle.id);
+                      // Delete vehicle photos
+                      await supabase.from("vehicle_photos").delete().eq("vehicle_id", vehicle.id);
+                      // Delete P&L entries
+                      await supabase.from("pnl_entries").delete().eq("vehicle_id", vehicle.id);
+                      // Delete plates
+                      await supabase.from("plates").delete().eq("vehicle_id", vehicle.id);
+                      // Finally delete the vehicle
+                      const { error } = await supabase.from("vehicles").delete().eq("id", vehicle.id);
+                      if (error) throw error;
+
+                      toast({
+                        title: "Vehicle Deleted",
+                        description: `${vehicle.reg} has been deleted successfully.`,
+                      });
+
+                      // Invalidate queries and navigate back
+                      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
+                      navigate("/vehicles");
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to delete vehicle",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Delete Vehicle
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <VehicleStatusBadge status={vehicle.status} showTooltip />
         </div>
       </div>

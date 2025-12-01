@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ArrowLeft, Plus, X, Send } from "lucide-react";
+import { FileText, ArrowLeft, Plus, X, Send, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { AddPaymentDialog } from "@/components/AddPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -159,6 +160,77 @@ const RentalDetail = () => {
               Close Rental
             </Button>
           )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Rental</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this rental for {rental.customers?.name} ({rental.vehicles?.reg})?
+                  This action cannot be undone and will remove all associated charges and payment allocations.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    try {
+                      // Delete related records first due to foreign key constraints
+                      // Delete ledger entries for this rental
+                      await supabase.from("ledger_entries").delete().eq("rental_id", rental.id);
+                      // Delete reminder related tables
+                      await supabase.from("reminder_actions").delete().eq("rental_id", rental.id);
+                      await supabase.from("reminder_emails").delete().eq("rental_id", rental.id);
+                      await supabase.from("reminder_events").delete().eq("rental_id", rental.id);
+                      await supabase.from("reminder_logs").delete().eq("rental_id", rental.id);
+                      await supabase.from("reminders").delete().eq("rental_id", rental.id);
+                      // Delete payment applications for this rental
+                      await supabase.from("payment_applications").delete().eq("rental_id", rental.id);
+                      // Delete charges for this rental
+                      await supabase.from("charges").delete().eq("rental_id", rental.id);
+                      // Delete payments for this rental
+                      await supabase.from("payments").delete().eq("rental_id", rental.id);
+                      // Delete invoices for this rental
+                      await supabase.from("invoices").delete().eq("rental_id", rental.id);
+                      // Finally delete the rental
+                      const { error } = await supabase.from("rentals").delete().eq("id", rental.id);
+                      if (error) throw error;
+
+                      // Update vehicle status back to Available
+                      await supabase
+                        .from("vehicles")
+                        .update({ status: "Available" })
+                        .eq("id", rental.vehicles?.id);
+
+                      toast({
+                        title: "Rental Deleted",
+                        description: "The rental has been deleted successfully.",
+                      });
+
+                      // Invalidate queries and navigate back
+                      queryClient.invalidateQueries({ queryKey: ["rentals-list"] });
+                      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
+                      navigate("/rentals");
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to delete rental",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Delete Rental
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

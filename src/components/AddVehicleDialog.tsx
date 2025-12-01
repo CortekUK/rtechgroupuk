@@ -144,6 +144,30 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
   });
 
   const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen) {
+      // Reset form with fresh default values when opening
+      form.reset({
+        reg: "",
+        make: "",
+        model: "",
+        year: undefined,
+        colour: "",
+        fuel_type: undefined,
+        acquisition_date: new Date(),
+        acquisition_type: "Purchase",
+        has_logbook: false,
+        has_service_plan: false,
+        has_spare_key: false,
+        spare_key_holder: undefined,
+        spare_key_notes: "",
+        has_tracker: false,
+        has_remote_immobiliser: false,
+        security_notes: "",
+        daily_rate: undefined,
+        weekly_rate: undefined,
+        monthly_rate: undefined,
+      });
+    }
     if (onOpenChange) {
       onOpenChange(newOpen);
     } else {
@@ -209,12 +233,17 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
 
       form.reset();
       handleOpenChange(false);
-      
-      // Refresh the vehicles list and P&L data
-      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicles-pl"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicle-count"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicle-pl-entries"] });
+
+      // Refresh the vehicles list and P&L data - use await to ensure data is refreshed
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["vehicles-list"] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicles-pl"] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicle-count"] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicle-pl-entries"] }),
+      ]);
+
+      // Force refetch to ensure UI updates
+      await queryClient.refetchQueries({ queryKey: ["vehicles-list"] });
     } catch (error: any) {
       let errorMessage = "Failed to add vehicle. Please try again.";
       
@@ -300,10 +329,12 @@ export const AddVehicleDialog = ({ open, onOpenChange }: AddVehicleDialogProps) 
                             <Calendar
                               mode="single"
                               selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                              }
+                              onSelect={(date) => {
+                                if (date) {
+                                  field.onChange(date);
+                                }
+                              }}
+                              defaultMonth={field.value}
                               initialFocus
                             />
                           </PopoverContent>
