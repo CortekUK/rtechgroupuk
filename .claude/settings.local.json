@@ -7,7 +7,8 @@
       "Bash(grep:*)",
       "Read(//c/Users/user/Desktop/rtechgroupusa/**)",
       "Bash(npx supabase login:*)",
-      "Bash(npx supabase secrets set:*)"
+      "Bash(npx supabase secrets set:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
