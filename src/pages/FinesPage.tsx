@@ -113,10 +113,10 @@ export default function FinesPage() {
       <TableCell>
         <div className="space-y-1">
           <div className="text-sm">
-            <strong>Issue:</strong> {format(new Date(fine.issue_date), "MM/dd/yyyy")}
+            <strong>Issue:</strong> {format(new Date(fine.issue_date), "dd/MM/yyyy")}
           </div>
           <div className="text-sm">
-            <strong>Due:</strong> {format(new Date(fine.due_date), "MM/dd/yyyy")}
+            <strong>Due:</strong> {format(new Date(fine.due_date), "dd/MM/yyyy")}
           </div>
         </div>
       </TableCell>

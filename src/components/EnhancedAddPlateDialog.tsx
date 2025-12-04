@@ -449,7 +449,7 @@ export const EnhancedAddPlateDialog = ({
                             className="w-full pl-3 text-left font-normal"
                           >
                             {field.value ? (
-                              format(field.value, "MM/dd/yyyy")
+                              format(field.value, "dd/MM/yyyy")
                             ) : (
                               <span className="text-muted-foreground">Pick a date</span>
                             )}

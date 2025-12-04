@@ -492,7 +492,7 @@ export function InsurancePolicyDialog({
                   <div key={overlap.overlapping_policy_id} className="p-3 border rounded bg-muted">
                     <div className="font-medium">Policy: {overlap.overlapping_policy_number}</div>
                     <div className="text-sm text-muted-foreground">
-                      Period: {format(new Date(overlap.overlapping_start_date), "MMM d, yyyy")} - {format(new Date(overlap.overlapping_expiry_date), "MMM d, yyyy")}
+                      Period: {format(new Date(overlap.overlapping_start_date), "d MMM yyyy")} - {format(new Date(overlap.overlapping_expiry_date), "d MMM yyyy")}
                     </div>
                   </div>
                 ))}

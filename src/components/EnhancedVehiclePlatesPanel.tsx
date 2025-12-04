@@ -175,7 +175,7 @@ export const EnhancedVehiclePlatesPanel = ({ vehicleId, vehicleReg }: EnhancedVe
                       </div>
                       <div className="text-sm text-green-600 mt-1">
                         {currentPlate.supplier && `Supplier: ${currentPlate.supplier}`}
-                        {currentPlate.order_date && ` • Ordered: ${format(new Date(currentPlate.order_date), "MM/dd/yyyy")}`}
+                        {currentPlate.order_date && ` • Ordered: ${format(new Date(currentPlate.order_date), "dd/MM/yyyy")}`}
                       </div>
                     </div>
                     <DropdownMenu>
@@ -227,7 +227,7 @@ export const EnhancedVehiclePlatesPanel = ({ vehicleId, vehicleReg }: EnhancedVe
                       </TableCell>
                       <TableCell>{plate.supplier || "-"}</TableCell>
                       <TableCell>
-                        {plate.order_date ? format(new Date(plate.order_date), "MM/dd/yyyy") : "-"}
+                        {plate.order_date ? format(new Date(plate.order_date), "dd/MM/yyyy") : "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         {plate.cost ? `£${Number(plate.cost).toFixed(2)}` : "-"}

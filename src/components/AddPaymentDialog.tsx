@@ -54,7 +54,7 @@ export const AddPaymentDialog = ({
       customer_id: customer_id || "",
       vehicle_id: vehicle_id || "",
       amount: 0,
-      payment_date: toZonedTime(new Date(), 'America/New_York'),
+      payment_date: toZonedTime(new Date(), 'Europe/London'),
       method: "",
       notes: "",
     },
@@ -110,7 +110,7 @@ export const AddPaymentDialog = ({
           vehicle_id: finalVehicleId,
           rental_id: rentalId, // Auto-inferred rental ID
           amount: data.amount,
-          payment_date: formatInTimeZone(data.payment_date, 'America/New_York', 'yyyy-MM-dd'),
+          payment_date: formatInTimeZone(data.payment_date, 'Europe/London', 'yyyy-MM-dd'),
           method: data.method,
           payment_type: 'Payment', // All customer payments are generic
         })
@@ -281,7 +281,7 @@ export const AddPaymentDialog = ({
                           )}
                         >
                           {field.value ? (
-                            formatInTimeZone(field.value, 'America/New_York', "MM/dd/yyyy")
+                            formatInTimeZone(field.value, 'Europe/London', "dd/MM/yyyy")
                           ) : (
                             <span>Pick a date</span>
                           )}

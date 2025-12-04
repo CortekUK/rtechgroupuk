@@ -6,7 +6,8 @@
       "Bash(grep -n \"$$\" components/EnhancedVehiclePlatesPanel.tsx)",
       "Bash(grep:*)",
       "Read(//c/Users/user/Desktop/rtechgroupusa/**)",
-      "Bash(npx supabase login:*)"
+      "Bash(npx supabase login:*)",
+      "Bash(npx supabase secrets set:*)"
     ],
     "deny": [],
     "ask": []

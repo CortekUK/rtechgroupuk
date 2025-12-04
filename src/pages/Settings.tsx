@@ -323,13 +323,6 @@ const Settings = () => {
                   />
                 </div>
               </div>
-
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Delivery Mode</h4>
-                <p className="text-sm text-muted-foreground">
-                  Currently set to "In-App Only". Email and WhatsApp delivery options will be available in future updates.
-                </p>
-              </div>
             </CardContent>
           </Card>
 

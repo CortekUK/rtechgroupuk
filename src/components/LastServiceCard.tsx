@@ -13,7 +13,7 @@ interface LastServiceCardProps {
 
 export function LastServiceCard({ vehicle }: LastServiceCardProps) {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric'

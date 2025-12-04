@@ -264,11 +264,11 @@ export const InvoiceDialog = ({
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Date:</span>
-                  <span class="detail-value">${format(new Date(invoice.issue_date), "MMMM d, yyyy")}</span>
+                  <span class="detail-value">${format(new Date(invoice.issue_date), "d MMMM yyyy")}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Due Date:</span>
-                  <span class="detail-value">${format(new Date(invoice.due_date), "MMMM d, yyyy")}</span>
+                  <span class="detail-value">${format(new Date(invoice.due_date), "d MMMM yyyy")}</span>
                 </div>
               </div>
             </div>
@@ -285,7 +285,7 @@ export const InvoiceDialog = ({
                 ${invoice.rental_start_date ? `
                 <div class="rental-item">
                   <span class="rental-item-label">Rental Period:</span>
-                  <span class="rental-item-value">${format(new Date(invoice.rental_start_date), "MMM d, yyyy")} - ${invoice.rental_end_date ? format(new Date(invoice.rental_end_date), "MMM d, yyyy") : 'Ongoing'}</span>
+                  <span class="rental-item-value">${format(new Date(invoice.rental_start_date), "d MMM yyyy")} - ${invoice.rental_end_date ? format(new Date(invoice.rental_end_date), "d MMM yyyy") : 'Ongoing'}</span>
                 </div>
                 ` : ''}
               </div>
@@ -384,11 +384,11 @@ export const InvoiceDialog = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-black">Date:</span>
-                  <span className="text-black">{format(new Date(invoice.issue_date), "MMMM d, yyyy")}</span>
+                  <span className="text-black">{format(new Date(invoice.issue_date), "d MMMM yyyy")}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-black">Due Date:</span>
-                  <span className="text-black">{format(new Date(invoice.due_date), "MMMM d, yyyy")}</span>
+                  <span className="text-black">{format(new Date(invoice.due_date), "d MMMM yyyy")}</span>
                 </div>
               </div>
             </div>
@@ -409,7 +409,7 @@ export const InvoiceDialog = ({
                   <div>
                     <span className="text-black block">Rental Period:</span>
                     <span className="font-medium text-black">
-                      {format(new Date(invoice.rental_start_date), "MMM d, yyyy")} - {invoice.rental_end_date ? format(new Date(invoice.rental_end_date), "MMM d, yyyy") : "Ongoing"}
+                      {format(new Date(invoice.rental_start_date), "d MMM yyyy")} - {invoice.rental_end_date ? format(new Date(invoice.rental_end_date), "d MMM yyyy") : "Ongoing"}
                     </span>
                   </div>
                 )}

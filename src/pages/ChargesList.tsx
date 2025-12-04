@@ -187,7 +187,7 @@ const ChargesList = () => {
                               {charge.due_date === new Date().toISOString().split('T')[0] && (
                                 <Calendar className="h-4 w-4 text-yellow-500" />
                               )}
-                              {new Date(charge.due_date).toLocaleDateString()}
+                              {new Date(charge.due_date).toLocaleDateString('en-GB')}
                             </>
                           ) : (
                             'No due date'

@@ -5,9 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { RentalFilters } from "@/hooks/useEnhancedRentals";
+
+// Normalize date to avoid timezone issues - set to noon local time
+const normalizeDate = (date: Date | undefined): Date | undefined => {
+  if (!date) return undefined;
+  const normalized = new Date(date);
+  normalized.setHours(12, 0, 0, 0);
+  return normalized;
+};
 
 interface RentalsFiltersProps {
   filters: RentalFilters;
@@ -103,7 +111,7 @@ export const RentalsFilters = ({ filters, onFiltersChange, onClearFilters }: Ren
                 )}
               >
                 <Calendar className="mr-2 h-4 w-4" />
-                {filters.startDateFrom ? format(filters.startDateFrom, "MMM dd") : "From"}
+                {filters.startDateFrom ? format(filters.startDateFrom, "dd MMM") : "From"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -111,7 +119,7 @@ export const RentalsFilters = ({ filters, onFiltersChange, onClearFilters }: Ren
                 mode="single"
                 selected={filters.startDateFrom}
                 onSelect={(date) => {
-                  updateFilter("startDateFrom", date);
+                  updateFilter("startDateFrom", normalizeDate(date));
                   setStartDateOpen(false);
                 }}
                 initialFocus
@@ -130,7 +138,7 @@ export const RentalsFilters = ({ filters, onFiltersChange, onClearFilters }: Ren
                 )}
               >
                 <Calendar className="mr-2 h-4 w-4" />
-                {filters.startDateTo ? format(filters.startDateTo, "MMM dd") : "To"}
+                {filters.startDateTo ? format(filters.startDateTo, "dd MMM") : "To"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -138,7 +146,7 @@ export const RentalsFilters = ({ filters, onFiltersChange, onClearFilters }: Ren
                 mode="single"
                 selected={filters.startDateTo}
                 onSelect={(date) => {
-                  updateFilter("startDateTo", date);
+                  updateFilter("startDateTo", normalizeDate(date));
                   setEndDateOpen(false);
                 }}
                 initialFocus

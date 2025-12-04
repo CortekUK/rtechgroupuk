@@ -462,10 +462,10 @@ const CustomerDetail = () => {
                             </div>
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
-                            {format(new Date(rental.start_date), "MM/dd/yyyy")}
+                            {format(new Date(rental.start_date), "dd/MM/yyyy")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
-                            {rental.end_date ? format(new Date(rental.end_date), "MM/dd/yyyy") : "Ongoing"}
+                            {rental.end_date ? format(new Date(rental.end_date), "dd/MM/yyyy") : "Ongoing"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             £{rental.monthly_amount.toLocaleString()}
@@ -534,7 +534,7 @@ const CustomerDetail = () => {
                       {payments.map((payment) => (
                         <TableRow key={payment.id} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="whitespace-nowrap">
-                            {format(new Date(payment.payment_date), "MM/dd/yyyy")}
+                            {format(new Date(payment.payment_date), "dd/MM/yyyy")}
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             £{payment.amount.toLocaleString()}
@@ -643,10 +643,10 @@ const CustomerDetail = () => {
                             £{fine.amount.toLocaleString()}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
-                            {format(new Date(fine.issue_date), "MM/dd/yyyy")}
+                            {format(new Date(fine.issue_date), "dd/MM/yyyy")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
-                            {format(new Date(fine.due_date), "MM/dd/yyyy")}
+                            {format(new Date(fine.due_date), "dd/MM/yyyy")}
                           </TableCell>
                           <TableCell>
                             <FineStatusBadge 
@@ -712,10 +712,10 @@ const CustomerDetail = () => {
                             </div>
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
-                            {format(new Date(history.start_date), "MM/dd/yyyy")}
+                            {format(new Date(history.start_date), "dd/MM/yyyy")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
-                            {history.end_date ? format(new Date(history.end_date), "MM/dd/yyyy") : "Ongoing"}
+                            {history.end_date ? format(new Date(history.end_date), "dd/MM/yyyy") : "Ongoing"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             £{history.monthly_amount.toLocaleString()}
@@ -803,7 +803,7 @@ const CustomerDetail = () => {
                                   <DocumentSigningStatusBadge status={rental.document_status || 'pending'} />
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                  {format(new Date(rental.created_at), "MM/dd/yyyy")}
+                                  {format(new Date(rental.created_at), "dd/MM/yyyy")}
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center justify-end gap-1">

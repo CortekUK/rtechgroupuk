@@ -237,12 +237,12 @@ export function InsurancePolicyDrawer({
                     </div>
                     <div>
                       <div className="text-sm font-medium text-muted-foreground">Start Date</div>
-                      <div>{format(new Date(policy.start_date), "MMM d, yyyy")}</div>
+                      <div>{format(new Date(policy.start_date), "d MMM yyyy")}</div>
                     </div>
                     <div>
                       <div className="text-sm font-medium text-muted-foreground">Expiry Date</div>
                       <div className="flex items-center gap-2">
-                        {format(new Date(policy.expiry_date), "MMM d, yyyy")}
+                        {format(new Date(policy.expiry_date), "d MMM yyyy")}
                         {daysUntilExpiry >= 0 && daysUntilExpiry <= 30 && (
                           <Badge variant="outline" className="text-xs">
                             {daysUntilExpiry === 0 ? "Today" : `${daysUntilExpiry}d`}
@@ -338,7 +338,7 @@ export function InsurancePolicyDrawer({
                             <div>
                               <div className="font-medium">{doc.file_name || doc.doc_type}</div>
                               <div className="text-sm text-muted-foreground">
-                                {doc.doc_type} • {format(new Date(doc.uploaded_at), "MMM d, yyyy")}
+                                {doc.doc_type} • {format(new Date(doc.uploaded_at), "d MMM yyyy")}
                               </div>
                             </div>
                           </div>
@@ -376,7 +376,7 @@ export function InsurancePolicyDrawer({
                       {auditTrail.map((event) => (
                         <div key={event.id} className="flex gap-3 text-sm">
                           <div className="text-muted-foreground">
-                            {format(new Date(event.created_at), "MMM d, HH:mm")}
+                            {format(new Date(event.created_at), "d MMM, HH:mm")}
                           </div>
                           <div>{event.summary}</div>
                         </div>

@@ -42,7 +42,7 @@ export function ServiceHistoryTable({
   const [editingRecord, setEditingRecord] = useState<ServiceRecord | undefined>();
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US');
+    return new Date(dateString).toLocaleDateString('en-GB');
   };
 
   const formatCurrency = (amount: number) => {

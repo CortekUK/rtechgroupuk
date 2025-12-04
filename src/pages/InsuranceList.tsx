@@ -245,10 +245,10 @@ export default function InsuranceList() {
                       </TableCell>
                       <TableCell>{policy.provider || "—"}</TableCell>
                       <TableCell>
-                        {format(new Date(policy.start_date), "MMM d, yyyy")}
+                        {format(new Date(policy.start_date), "d MMM yyyy")}
                       </TableCell>
                       <TableCell>
-                        {format(new Date(policy.expiry_date), "MMM d, yyyy")}
+                        {format(new Date(policy.expiry_date), "d MMM yyyy")}
                       </TableCell>
                       <TableCell>
                         <InsurancePolicyStatusChip 

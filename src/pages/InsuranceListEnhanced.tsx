@@ -428,11 +428,11 @@ export default function InsuranceListEnhanced() {
                       </TableCell>
                       <TableCell>{policy.provider || "—"}</TableCell>
                       <TableCell>
-                        {format(new Date(policy.start_date), "MMM d, yyyy")}
+                        {format(new Date(policy.start_date), "d MMM yyyy")}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {format(new Date(policy.expiry_date), "MMM d, yyyy")}
+                          {format(new Date(policy.expiry_date), "d MMM yyyy")}
                           {isPolicyUrgent(policy.expiry_date) && (
                             <Badge variant="outline" className="text-xs text-amber-600">
                               Urgent

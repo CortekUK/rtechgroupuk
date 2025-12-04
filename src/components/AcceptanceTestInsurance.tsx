@@ -85,7 +85,7 @@ export function AcceptanceTestInsurance() {
         name: 'Create Insurance Policy',
         status: 'pass',
         message: `Policy created: ${policy.policy_number}`,
-        details: `Expires in 45 days (${expiryDate.toLocaleDateString()})`
+        details: `Expires in 45 days (${expiryDate.toLocaleDateString('en-GB')})`
       });
 
       // Test 3: Upload test documents

@@ -411,8 +411,8 @@ const FineDetail = () => {
                   { label: "Reference", value: fine.reference_no || '-' },
                   { label: "Vehicle", value: `${fine.vehicles.reg} (${fine.vehicles.make} ${fine.vehicles.model})` },
                   { label: "Customer", value: fine.customers?.name || 'No customer assigned' },
-                  { label: "Issue Date", value: new Date(fine.issue_date).toLocaleDateString() },
-                  { label: "Due Date", value: new Date(fine.due_date).toLocaleDateString() }
+                  { label: "Issue Date", value: new Date(fine.issue_date).toLocaleDateString('en-GB') },
+                  { label: "Due Date", value: new Date(fine.due_date).toLocaleDateString('en-GB') }
                 ]} />
                 {fine.notes && (
                   <div className="mt-6 pt-4 border-t">
@@ -442,7 +442,7 @@ const FineDetail = () => {
                         <div>
                           <p className="font-medium">{file.file_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            Uploaded {new Date(file.uploaded_at).toLocaleDateString()}
+                            Uploaded {new Date(file.uploaded_at).toLocaleDateString('en-GB')}
                           </p>
                         </div>
                         <Button
@@ -483,7 +483,7 @@ const FineDetail = () => {
                       <div key={payment.id} className="flex justify-between p-3 bg-muted rounded-lg">
                         <div>
                           <p className="font-medium text-green-600">£{Number(payment.amount).toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground">{new Date(payment.payment_date).toLocaleDateString()}</p>
+                          <p className="text-sm text-muted-foreground">{new Date(payment.payment_date).toLocaleDateString('en-GB')}</p>
                         </div>
                         <Badge variant="outline">{payment.payment_method || 'Unknown'}</Badge>
                       </div>

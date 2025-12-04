@@ -354,7 +354,7 @@ export default function RemindersPage() {
                       £{reminder.ledger_entries?.remaining_amount || reminder.ledger_entries?.amount}
                     </TableCell>
                     <TableCell>
-                      {new Date(reminder.ledger_entries?.due_date).toLocaleDateString()}
+                      {new Date(reminder.ledger_entries?.due_date).toLocaleDateString('en-GB')}
                     </TableCell>
                     <TableCell>{getStatusBadge(reminder.status)}</TableCell>
                     <TableCell className="max-w-xs truncate">

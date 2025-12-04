@@ -162,7 +162,7 @@ export const VehicleFileUpload = ({
                         {file.file_name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatFileSize(file.size_bytes)} • Uploaded {format(new Date(file.uploaded_at), "MMM d, yyyy")}
+                        {formatFileSize(file.size_bytes)} • Uploaded {format(new Date(file.uploaded_at), "d MMM yyyy")}
                       </p>
                     </div>
                   </div>

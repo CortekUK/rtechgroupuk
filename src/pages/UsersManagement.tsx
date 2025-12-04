@@ -255,7 +255,7 @@ export default function UsersManagement() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>{format(new Date(user.created_at), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{format(new Date(user.created_at), 'd MMM yyyy')}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

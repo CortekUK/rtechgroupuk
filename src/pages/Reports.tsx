@@ -375,7 +375,7 @@ const Reports = () => {
                     <h2 className="text-lg font-medium mb-2">Available Reports</h2>
                     <p className="text-muted-foreground text-sm">
                       Click on a report card to preview data or use export icons for direct downloads.
-                      All amounts shown in USD with America/New_York timezone.
+                      All amounts shown in GBP with Europe/London timezone.
                     </p>
                   </div>
 

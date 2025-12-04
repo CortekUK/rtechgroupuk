@@ -179,7 +179,7 @@ export const TestingCards: React.FC = () => {
                   <div className="text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Clock className="h-3 w-3" />
-                      Last run: {suite.lastRun.toLocaleDateString()} at {suite.lastRun.toLocaleTimeString()}
+                      Last run: {suite.lastRun.toLocaleDateString('en-GB')} at {suite.lastRun.toLocaleTimeString('en-GB')}
                     </div>
                   </div>
                 )}

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, Save, AlertTriangle, Mail, Receipt } from "lucide-react";
+import { ArrowLeft, FileText, Save, AlertTriangle, Mail, Receipt, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerActiveRentals } from "@/hooks/useCustomerActiveRentals";
@@ -65,6 +65,7 @@ const CreateRental = () => {
   const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [createdRental, setCreatedRental] = useState<any>(null);
   const [sendingDocuSign, setSendingDocuSign] = useState(false);
+  const [isAmountEditable, setIsAmountEditable] = useState(false);
 
   const { createInvoice, isCreating: isCreatingInvoice } = useInvoices();
 
@@ -123,9 +124,9 @@ const CreateRental = () => {
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
   const selectedVehicle = vehicles?.find(v => v.id === selectedVehicleId);
 
-  // Auto-populate rental amount when vehicle or rental type changes
+  // Auto-populate rental amount when vehicle or rental type changes (only if not manually editing)
   useEffect(() => {
-    if (selectedVehicle && selectedRentalType) {
+    if (selectedVehicle && selectedRentalType && !isAmountEditable) {
       let rate: number | undefined;
       switch (selectedRentalType) {
         case 'Daily':
@@ -142,7 +143,7 @@ const CreateRental = () => {
         form.setValue('monthly_amount', rate);
       }
     }
-  }, [selectedVehicleId, selectedRentalType, selectedVehicle, form]);
+  }, [selectedVehicleId, selectedRentalType, selectedVehicle, form, isAmountEditable]);
 
   // Set default end date when rental type changes
   useEffect(() => {
@@ -657,20 +658,31 @@ const CreateRental = () => {
                              selectedRentalType === 'Weekly' ? 'Weekly' :
                              'Monthly'} Amount *
                           </FormLabel>
-                          <FormControl>
-                            <CurrencyInput
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Select vehicle and rental type"
-                              min={1}
-                              step={1}
-                              error={!!form.formState.errors.monthly_amount}
-                              disabled={true}
-                            />
-                          </FormControl>
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <CurrencyInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Select vehicle and rental type"
+                                min={1}
+                                step={1}
+                                error={!!form.formState.errors.monthly_amount}
+                                disabled={!isAmountEditable}
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setIsAmountEditable(!isAmountEditable)}
+                              title={isAmountEditable ? "Lock amount" : "Edit amount"}
+                            >
+                              <Pencil className={`h-4 w-4 ${isAmountEditable ? 'text-primary' : ''}`} />
+                            </Button>
+                          </div>
                           <FormMessage />
                           <FormDescription>
-                            Auto-filled from vehicle rates
+                            {isAmountEditable ? 'Custom amount - click pencil to lock' : 'Auto-filled from vehicle rates - click pencil to edit'}
                           </FormDescription>
                         </FormItem>
                       )}

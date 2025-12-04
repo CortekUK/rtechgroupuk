@@ -272,9 +272,10 @@ async function handleDocuSignWebhook(supabaseClient: any, event: DocuSignEvent) 
       document_status: mappedStatus
     };
 
-    // If completed, download the signed document
+    // If completed, set completion timestamp and download the signed document
     if (mappedStatus === 'completed') {
       console.log('Envelope completed, downloading signed document...');
+      updateData.envelope_completed_at = new Date().toISOString();
 
       // Get DocuSign credentials
       const DOCUSIGN_INTEGRATION_KEY = Deno.env.get('DOCUSIGN_INTEGRATION_KEY');
@@ -338,7 +339,6 @@ async function handleDocuSignWebhook(supabaseClient: any, event: DocuSignEvent) 
         } else {
           console.log('Created document record:', docRecord.id);
           updateData.signed_document_id = docRecord.id;
-          updateData.envelope_completed_at = new Date().toISOString();
         }
       } else {
         console.error('Failed to download signed document:', downloadResult.error);
@@ -354,6 +354,34 @@ async function handleDocuSignWebhook(supabaseClient: any, event: DocuSignEvent) 
     if (updateError) {
       console.error('Error updating rental:', updateError);
       return { ok: false, error: updateError.message };
+    }
+
+    // If completed, send booking confirmation email
+    if (mappedStatus === 'completed') {
+      console.log('Sending booking confirmation email for rental:', rental.id);
+      try {
+        const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+        const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+
+        const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-booking-confirmation`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({ rentalId: rental.id })
+        });
+
+        const emailResult = await emailResponse.json();
+        if (emailResult.ok) {
+          console.log('Booking confirmation email sent successfully');
+        } else {
+          console.error('Failed to send booking confirmation email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('Error sending booking confirmation email:', emailError);
+        // Don't fail the webhook if email fails - the main processing was successful
+      }
     }
 
     console.log('Successfully processed webhook for rental:', rental.id);

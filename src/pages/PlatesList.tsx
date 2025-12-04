@@ -159,12 +159,12 @@ const PlatesList = () => {
       plate.plate_number,
       plate.vehicles ? `${plate.vehicles.reg} (${plate.vehicles.make} ${plate.vehicles.model})` : "Not Assigned",
       plate.supplier || "",
-      plate.order_date ? new Date(plate.order_date).toLocaleDateString() : "",
+      plate.order_date ? new Date(plate.order_date).toLocaleDateString('en-GB') : "",
       plate.cost || "0",
       plate.status || "",
       plate.retention_doc_reference || "",
       plate.notes || "",
-      new Date(plate.created_at).toLocaleDateString()
+      new Date(plate.created_at).toLocaleDateString('en-GB')
     ]);
 
     const csvContent = [csvHeaders, ...csvData]

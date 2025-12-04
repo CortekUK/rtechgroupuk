@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useReminders, useReminderStats, useReminderActions, useReminderGeneration, type ReminderFilters } from '@/hooks/useReminders';
+import { useReminders, useReminderStats, useReminderActions, useReminderGeneration, useSendReminderEmail, type ReminderFilters } from '@/hooks/useReminders';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,18 +10,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { 
-  AlertTriangle, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Bell, 
+import {
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Bell,
   Calendar,
   Filter,
   Download,
   Play,
   Pause,
-  MoreHorizontal
+  MoreHorizontal,
+  Mail
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -57,6 +58,7 @@ export default function RemindersPageEnhanced() {
   const { data: stats } = useReminderStats();
   const { markDone, dismiss, snooze, bulkUpdate, isLoading: isUpdating } = useReminderActions();
   const generateReminders = useReminderGeneration();
+  const sendEmail = useSendReminderEmail();
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -503,6 +505,13 @@ export default function RemindersPageEnhanced() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => sendEmail.mutate(reminder.id)}
+                              disabled={sendEmail.isPending || ['done', 'dismissed', 'expired'].includes(reminder.status)}
+                            >
+                              <Mail className="h-4 w-4 mr-2" />
+                              {sendEmail.isPending ? 'Sending...' : 'Send Email'}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => markDone(reminder.id)}
                               disabled={['done', 'dismissed', 'expired'].includes(reminder.status)}

@@ -306,11 +306,11 @@ const RentalDetail = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Start Date</p>
-              <p className="font-medium">{new Date(rental.start_date).toLocaleDateString()}</p>
+              <p className="font-medium">{new Date(rental.start_date).toLocaleDateString('en-GB')}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">End Date</p>
-              <p className="font-medium">{new Date(rental.end_date).toLocaleDateString()}</p>
+              <p className="font-medium">{new Date(rental.end_date).toLocaleDateString('en-GB')}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Monthly Amount</p>

@@ -332,8 +332,8 @@ const VehiclesList = () => {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {vehicle.last_service_date 
-                              ? new Date(vehicle.last_service_date).toLocaleDateString('en-US')
+                            {vehicle.last_service_date
+                              ? new Date(vehicle.last_service_date).toLocaleDateString('en-GB')
                               : "—"
                             }
                           </span>

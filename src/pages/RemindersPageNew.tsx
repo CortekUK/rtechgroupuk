@@ -152,7 +152,7 @@ const RemindersPage = () => {
               <TableCell className="font-medium">{reminder.customers?.name}</TableCell>
               <TableCell>{reminder.vehicles?.reg}</TableCell>
               <TableCell className="max-w-xs truncate">{reminder.message_preview}</TableCell>
-              <TableCell>{new Date(reminder.created_at).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(reminder.created_at).toLocaleDateString('en-GB')}</TableCell>
               <TableCell>
                 <Badge variant={reminder.status === 'Done' ? 'default' : 'secondary'}>
                   {reminder.status}

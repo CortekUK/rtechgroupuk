@@ -4,12 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Plus, Eye, CreditCard, XCircle, Download } from "lucide-react";
+import { FileText, Plus, Eye, CreditCard, XCircle, Download, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useEnhancedRentals, RentalFilters } from "@/hooks/useEnhancedRentals";
 import { RentalsFilters } from "@/components/RentalsFilters";
 import { AddPaymentDialog } from "@/components/AddPaymentDialog";
 import { CloseRentalDialog } from "@/components/CloseRentalDialog";
-import { formatDuration } from "@/lib/rentalUtils";
+import { formatDurationDetailed } from "@/lib/rentalUtils";
 import {
   Pagination,
   PaginationContent,
@@ -75,7 +81,7 @@ const RentalsList = () => {
         `${rental.vehicle.reg} (${rental.vehicle.make} ${rental.vehicle.model})`,
         rental.start_date,
         rental.end_date || '',
-        formatDuration(rental.duration_months),
+        formatDurationDetailed(rental.start_date, rental.end_date, rental.computed_status),
         rental.initial_payment ? `£${rental.initial_payment}` : '—',
         `£${rental.monthly_amount}`,
         rental.computed_status
@@ -188,7 +194,7 @@ const RentalsList = () => {
             Rental Agreements
           </CardTitle>
           <CardDescription>
-            Showing {rentals.length} of {totalCount} rentals
+            Showing {rentals.length} of {Math.max(rentals.length, totalCount)} rentals
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,9 +246,9 @@ const RentalsList = () => {
                             {rental.vehicle.reg} ({rental.vehicle.make} {rental.vehicle.model})
                           </Button>
                         </TableCell>
-                        <TableCell>{new Date(rental.start_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{rental.end_date ? new Date(rental.end_date).toLocaleDateString() : '—'}</TableCell>
-                        <TableCell>{formatDuration(rental.duration_months)}</TableCell>
+                        <TableCell>{new Date(rental.start_date).toLocaleDateString('en-GB')}</TableCell>
+                        <TableCell>{rental.end_date ? new Date(rental.end_date).toLocaleDateString('en-GB') : '—'}</TableCell>
+                        <TableCell>{formatDurationDetailed(rental.start_date, rental.end_date, rental.computed_status)}</TableCell>
                         <TableCell className="text-left">
                           {rental.initial_payment ? `£${Number(rental.initial_payment).toLocaleString()}` : '—'}
                         </TableCell>
@@ -261,34 +267,34 @@ const RentalsList = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/rentals/${rental.id}`)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                            {rental.computed_status === 'Active' && (
-                              <>
-                                <Button
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleMakePayment(rental)}
-                                >
-                                  <CreditCard className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm" 
-                                  onClick={() => handleCloseRental(rental)}
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => navigate(`/rentals/${rental.id}`)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
+                              </DropdownMenuItem>
+                              {rental.computed_status === 'Active' && (
+                                <>
+                                  <DropdownMenuItem onClick={() => handleMakePayment(rental)}>
+                                    <CreditCard className="h-4 w-4 mr-2" />
+                                    Make Payment
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleCloseRental(rental)}
+                                    className="text-destructive"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Close Rental
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}

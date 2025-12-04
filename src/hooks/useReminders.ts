@@ -395,3 +395,40 @@ export function useReminderGeneration() {
     },
   });
 }
+
+export function useSendReminderEmail() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (reminderId: string) => {
+      const { data, error } = await supabase.functions.invoke('send-reminder-email', {
+        body: { reminderId }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.ok) {
+        throw new Error(data.error || 'Failed to send email');
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      toast({
+        title: "Email Sent",
+        description: `Reminder email sent to ${data.sentTo}${data.isInternal ? ' (internal)' : ''}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Email Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+}
