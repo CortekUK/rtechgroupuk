@@ -183,7 +183,6 @@ const CreateFine = () => {
       navigate(`/fines/${fine.id}`);
     },
     onError: (error) => {
-      console.error("Error creating fine:", error);
       toast({
         title: "Error",
         description: "Failed to create fine. Please try again.",

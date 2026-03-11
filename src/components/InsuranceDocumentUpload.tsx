@@ -84,7 +84,6 @@ export function InsuranceDocumentUpload({ policyId, documents }: InsuranceDocume
       }
     },
     onError: (error) => {
-      console.error("Upload error:", error);
       toast.error("Failed to upload document");
     },
   });
@@ -103,7 +102,6 @@ export function InsuranceDocumentUpload({ policyId, documents }: InsuranceDocume
       toast.success("Document deleted successfully");
     },
     onError: (error) => {
-      console.error("Delete error:", error);
       toast.error("Failed to delete document");
     },
   });
@@ -142,7 +140,6 @@ export function InsuranceDocumentUpload({ policyId, documents }: InsuranceDocume
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Download error:", error);
       toast.error("Failed to download document");
     }
   };

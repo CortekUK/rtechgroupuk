@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Car, FileText, PoundSterling, Wrench, Calendar, TrendingUp, TrendingDown, Plus, Shield, Clock, Trash2, Receipt, Users, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, Car, FileText, PoundSterling, Wrench, Calendar, TrendingUp, TrendingDown, Plus, Shield, Clock, Trash2, Receipt, Users, Eye, EyeOff, ArrowRightLeft } from "lucide-react";
 import { getContractTotal } from "@/lib/vehicleUtils";
 import { format } from "date-fns";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
@@ -33,6 +33,9 @@ import { VehicleFileUpload } from "@/components/VehicleFileUpload";
 import { VehicleCompliancePanel } from "@/components/VehicleCompliancePanel";
 import { VehicleDisposalDialog } from "@/components/VehicleDisposalDialog";
 import { VehicleUndoDisposalDialog } from "@/components/VehicleUndoDisposalDialog";
+import { BorrowVehicleDialog } from "@/components/BorrowVehicleDialog";
+import { ReturnBorrowedVehicleDialog } from "@/components/ReturnBorrowedVehicleDialog";
+import { useVehicleBorrowings } from "@/hooks/useVehicleBorrowings";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { PLBreadcrumb } from "@/components/PLBreadcrumb";
 import { VehiclePhotoUpload } from "@/components/VehiclePhotoUpload";
@@ -88,6 +91,7 @@ interface Vehicle {
   sale_proceeds?: number;
   disposal_buyer?: string;
   disposal_notes?: string;
+  disposal_type?: string;
   // Photo field
   photo_url?: string;
 }
@@ -175,6 +179,17 @@ export default function VehicleDetail() {
     isDeleting: isDeletingFile,
   } = useVehicleFiles(id!);
 
+  // Borrowings hook
+  const {
+    borrowings,
+    activeBorrowing,
+    isLoading: isLoadingBorrowings,
+    borrowVehicleAsync,
+    returnVehicleAsync,
+    isBorrowing,
+    isReturning,
+  } = useVehicleBorrowings(id!);
+
   // Fetch vehicle details
   const { data: vehicle, isLoading: vehicleLoading } = useQuery({
     queryKey: ["vehicle", id],
@@ -187,17 +202,7 @@ export default function VehicleDetail() {
         .single();
       
       if (error) throw error;
-      
-      // Debug logging
-      console.log('Vehicle data from database:', data);
-      console.log('Finance fields:', {
-        acquisition_type: data?.acquisition_type,
-        initial_payment: data?.initial_payment,
-        monthly_payment: data?.monthly_payment,
-        term_months: data?.term_months,
-        balloon: data?.balloon
-      });
-      
+
       return data as Vehicle;
     },
     enabled: !!id,
@@ -389,6 +394,16 @@ export default function VehicleDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {!vehicle.is_disposed && !activeBorrowing && (
+            <BorrowVehicleDialog
+              vehicleReg={vehicle.reg}
+              onBorrow={borrowVehicleAsync}
+              isBorrowing={isBorrowing}
+            />
+          )}
+          {!vehicle.is_disposed && (
+            <VehicleDisposalDialog vehicle={vehicle} />
+          )}
           <EditVehicleDialog vehicle={vehicle} />
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -468,7 +483,7 @@ export default function VehicleDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <VehicleStatusBadge status={vehicle.status} showTooltip />
+          <VehicleStatusBadge status={vehicle.status} disposalType={vehicle.disposal_type} showTooltip />
         </div>
       </div>
 
@@ -487,6 +502,7 @@ export default function VehicleDetail() {
           )}
           <TabsTrigger variant="evenly-spaced" value="services">Services</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="plates">Plates</TabsTrigger>
+          <TabsTrigger variant="evenly-spaced" value="borrowings">Borrowings</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="pl">P&L</TabsTrigger>
           <TabsTrigger variant="evenly-spaced" value="files">Files</TabsTrigger>
         </TabsList>
@@ -503,7 +519,51 @@ export default function VehicleDetail() {
 
           {/* Vehicle Compliance Status Panel */}
           {vehicle && <VehicleCompliancePanel vehicle={vehicle} />}
-          
+
+          {/* Borrowed banner */}
+          {activeBorrowing && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <ArrowRightLeft className="h-4 w-4 text-amber-600 shrink-0" />
+                <div className="text-sm">
+                  <span className="font-medium text-amber-700">Lent to {activeBorrowing.borrower_name}</span>
+                  <span className="text-amber-600 ml-2">
+                    since {format(new Date(activeBorrowing.borrowed_date), "dd/MM/yyyy")}
+                    {activeBorrowing.expected_return_date && (
+                      <> · return by {format(new Date(activeBorrowing.expected_return_date), "dd/MM/yyyy")}</>
+                    )}
+                  </span>
+                </div>
+              </div>
+              <ReturnBorrowedVehicleDialog
+                borrowing={activeBorrowing}
+                onReturn={returnVehicleAsync}
+                isReturning={isReturning}
+              />
+            </div>
+          )}
+
+          {/* Disposed banner */}
+          {vehicle.is_disposed && (
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center justify-between gap-4">
+              <div className="text-sm">
+                <span className="font-medium text-destructive">
+                  {vehicle.disposal_type === 'Sale' ? 'Sold' :
+                   vehicle.disposal_type === 'Written Off' ? 'Written Off' :
+                   vehicle.disposal_type === 'Trade-in' ? 'Traded In' :
+                   vehicle.disposal_type === 'Auction' ? 'Auctioned' :
+                   vehicle.disposal_type || 'Disposed'}
+                </span>
+                <span className="text-muted-foreground ml-2">
+                  {vehicle.disposal_date && format(new Date(vehicle.disposal_date), "dd/MM/yyyy")}
+                  {vehicle.sale_proceeds != null && <> · £{Number(vehicle.sale_proceeds).toLocaleString()}</>}
+                  {vehicle.disposal_buyer && <> · {vehicle.disposal_buyer}</>}
+                </span>
+              </div>
+              <VehicleUndoDisposalDialog vehicle={vehicle} />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {/* Vehicle Details */}
             <MetricCard 
@@ -520,7 +580,7 @@ export default function VehicleDetail() {
                 {vehicle.fuel_type && <MetricItem label="Fuel Type" value={vehicle.fuel_type} />}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Status:</span>
-                  <VehicleStatusBadge status={vehicle.status} showTooltip />
+                  <VehicleStatusBadge status={vehicle.status} disposalType={vehicle.disposal_type} showTooltip />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Acquisition:</span>
@@ -670,47 +730,6 @@ export default function VehicleDetail() {
                 />
               </div>
             </MetricCard>
-
-            {/* Vehicle Actions */}
-            {vehicle && (
-              <MetricCard 
-                title="Vehicle Actions"
-                icon={Shield}
-                badge={{ 
-                  text: vehicle.is_disposed ? "Disposed" : "Active", 
-                  variant: vehicle.is_disposed ? "destructive" : "default" 
-                }}
-              >
-                {vehicle.is_disposed ? (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                      <div className="text-sm">
-                        <div className="font-medium text-destructive mb-2">Vehicle Disposed</div>
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          {vehicle.disposal_date && (
-                            <MetricItem label="Date" value={format(new Date(vehicle.disposal_date), "dd/MM/yyyy")} />
-                          )}
-                          {vehicle.sale_proceeds && (
-                            <MetricItem label="Sale Proceeds" value={Number(vehicle.sale_proceeds)} isAmount />
-                          )}
-                          {vehicle.disposal_buyer && (
-                            <MetricItem label="Buyer" value={vehicle.disposal_buyer} />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <VehicleUndoDisposalDialog vehicle={vehicle} />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Administrative actions for this vehicle
-                    </p>
-                    <VehicleDisposalDialog vehicle={vehicle} />
-                  </div>
-                )}
-              </MetricCard>
-            )}
 
             {/* Rental Status */}
             <MetricCard 
@@ -1181,6 +1200,75 @@ export default function VehicleDetail() {
 
         <TabsContent value="plates" className="mt-6">
           <EnhancedVehiclePlatesPanel vehicleId={id!} vehicleReg={vehicle.reg} />
+        </TabsContent>
+
+        <TabsContent value="borrowings" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowRightLeft className="h-5 w-5" />
+                  Borrowing History
+                </CardTitle>
+                <CardDescription>Records of when this vehicle was lent out</CardDescription>
+              </div>
+              {!activeBorrowing && !vehicle.is_disposed && (
+                <BorrowVehicleDialog
+                  vehicleReg={vehicle.reg}
+                  onBorrow={borrowVehicleAsync}
+                  isBorrowing={isBorrowing}
+                />
+              )}
+            </CardHeader>
+            <CardContent>
+              {isLoadingBorrowings ? (
+                <div className="text-center py-8 text-muted-foreground">Loading borrowings...</div>
+              ) : borrowings.length > 0 ? (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Borrower</TableHead>
+                        <TableHead>Purpose</TableHead>
+                        <TableHead>Borrowed</TableHead>
+                        <TableHead>Expected Return</TableHead>
+                        <TableHead>Actual Return</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {borrowings.map((b) => (
+                        <TableRow key={b.id}>
+                          <TableCell className="font-medium">{b.borrower_name}</TableCell>
+                          <TableCell>{b.purpose || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {format(new Date(b.borrowed_date), "dd/MM/yyyy")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {b.expected_return_date ? format(new Date(b.expected_return_date), "dd/MM/yyyy") : "—"}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {b.actual_return_date ? format(new Date(b.actual_return_date), "dd/MM/yyyy") : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={b.actual_return_date ? "secondary" : "default"} className={b.actual_return_date ? "" : "bg-amber-100 text-amber-700"}>
+                              {b.actual_return_date ? "Returned" : "Active"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <EmptyState
+                  icon={ArrowRightLeft}
+                  title="No borrowing history"
+                  description="Borrowing records will appear here when this vehicle is lent out"
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="expenses" className="space-y-4">

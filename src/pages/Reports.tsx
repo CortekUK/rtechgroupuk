@@ -103,7 +103,6 @@ const Reports = () => {
       });
 
     } catch (error) {
-      console.error('Export error:', error);
       toast({
         title: 'Export failed',
         description: 'There was an error generating the export. Please try again.',

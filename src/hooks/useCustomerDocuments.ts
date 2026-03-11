@@ -85,7 +85,6 @@ export function useDeleteCustomerDocument() {
       toast.success("Document deleted successfully");
     },
     onError: (error) => {
-      console.error("Error deleting document:", error);
       toast.error("Failed to delete document");
     },
   });
@@ -116,7 +115,6 @@ export function useDownloadDocument() {
       URL.revokeObjectURL(url);
     },
     onError: (error) => {
-      console.error("Error downloading document:", error);
       toast.error("Failed to download document");
     },
   });

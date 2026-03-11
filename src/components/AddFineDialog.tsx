@@ -229,7 +229,6 @@ export const AddFineDialog = ({ open, onOpenChange, preSelectedVehicleId, preSel
       onSuccess?.();
     },
     onError: (error) => {
-      console.error("Error creating fine:", error);
       toast.error("Failed to create fine");
     },
   });

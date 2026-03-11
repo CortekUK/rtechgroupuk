@@ -322,7 +322,6 @@ export const EnhancedAddPlateDialog = ({
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
-      console.error("Error saving plate:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save plate",

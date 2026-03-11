@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 const paymentSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
   vehicle_id: z.string().optional(),
+  months_covered: z.coerce.number().min(0).max(24).optional(),
   amount: z.number().min(0.01, "Amount must be greater than 0"),
   payment_date: z.date({
     required_error: "Payment date is required",
@@ -84,6 +85,25 @@ export const AddPaymentDialog = ({
     enabled: !!selectedCustomerId,
   });
 
+  // Fetch the rental's monthly_amount for auto-calculating advance payments
+  const { data: rentalMonthlyAmount } = useQuery({
+    queryKey: ["rental-monthly-amount", rentalId],
+    queryFn: async () => {
+      if (!rentalId) return null;
+      const { data, error } = await supabase
+        .from("rentals")
+        .select("monthly_amount")
+        .eq("id", rentalId)
+        .single();
+      if (error) throw error;
+      return data?.monthly_amount || null;
+    },
+    enabled: !!rentalId,
+  });
+
+  // Watch months_covered and auto-fill amount
+  const monthsCovered = form.watch("months_covered");
+
   const { data: customers } = useQuery({
     queryKey: ["customers-for-payment"],
     queryFn: async () => {
@@ -92,6 +112,13 @@ export const AddPaymentDialog = ({
       return data;
     },
   });
+
+  // Auto-fill amount when months_covered changes (as a convenience shortcut)
+  useEffect(() => {
+    if (monthsCovered && monthsCovered > 0 && rentalMonthlyAmount) {
+      form.setValue("amount", monthsCovered * rentalMonthlyAmount);
+    }
+  }, [monthsCovered, rentalMonthlyAmount, form]);
 
   // Auto-infer vehicle from active rental when customer is selected
   const customerVehicles = activeRentals || [];
@@ -125,7 +152,6 @@ export const AddPaymentDialog = ({
       });
 
       if (applyError) {
-        console.error('Payment application error:', applyError);
         // Delete the payment record since processing failed
         await supabase.from('payments').delete().eq('id', payment.id);
         
@@ -158,7 +184,6 @@ export const AddPaymentDialog = ({
         queryClient.invalidateQueries({ queryKey: ["customer-balance", finalCustomerId] });
       }
     } catch (error) {
-      console.error("Error adding payment:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to add payment. Please try again.",
@@ -259,10 +284,42 @@ export const AddPaymentDialog = ({
                       onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
                     />
                   </FormControl>
+                  {rentalMonthlyAmount && field.value && field.value > 0 && (
+                    <FormDescription>
+                      ~{(field.value / rentalMonthlyAmount).toFixed(1)} months at £{rentalMonthlyAmount}/month
+                    </FormDescription>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {rentalId && rentalMonthlyAmount && (
+              <FormField
+                control={form.control}
+                name="months_covered"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quick Fill: Months</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={24}
+                        placeholder="e.g. 3"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Shortcut: sets amount to months x £{rentalMonthlyAmount}. You can adjust the amount above afterwards.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}

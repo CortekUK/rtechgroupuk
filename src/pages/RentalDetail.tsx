@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ArrowLeft, Plus, X, Send, Trash2 } from "lucide-react";
+import { FileText, ArrowLeft, Plus, X, Send, Trash2, CalendarCheck } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { AddPaymentDialog } from "@/components/AddPaymentDialog";
@@ -58,6 +58,33 @@ const RentalDetail = () => {
 
   const { data: rentalTotals } = useRentalTotals(id);
   const { data: initialFee } = useRentalInitialFee(id);
+
+  // Query rental charges to find "paid through" date
+  const { data: paidThroughDate } = useQuery({
+    queryKey: ["paid-through", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ledger_entries")
+        .select("due_date, remaining_amount")
+        .eq("rental_id", id!)
+        .eq("type", "Charge")
+        .eq("category", "Rental")
+        .order("due_date", { ascending: true });
+
+      if (error) throw error;
+      if (!data || data.length === 0) return null;
+
+      // Find the last charge with remaining_amount = 0
+      let lastPaidDate: string | null = null;
+      for (const entry of data) {
+        if (Number(entry.remaining_amount) === 0) {
+          lastPaidDate = entry.due_date;
+        }
+      }
+      return lastPaidDate;
+    },
+    enabled: !!id,
+  });
 
   // Handle DocuSign resending
   const handleResendDocuSign = async () => {
@@ -235,7 +262,7 @@ const RentalDetail = () => {
       </div>
 
       {/* Rental Summary */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Total Charges</CardTitle>
@@ -280,6 +307,30 @@ const RentalDetail = () => {
             >
               {computedStatus}
             </Badge>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CalendarCheck className="h-4 w-4" />
+              Paid Through
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {paidThroughDate ? (
+              <div className={`text-2xl font-bold ${
+                new Date(paidThroughDate) >= new Date(new Date().toISOString().split('T')[0])
+                  ? 'text-green-600'
+                  : 'text-amber-600'
+              }`}>
+                {new Date(paidThroughDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </div>
+            ) : (
+              <div className="text-2xl font-bold text-muted-foreground">
+                No payments
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

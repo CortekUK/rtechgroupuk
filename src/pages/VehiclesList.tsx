@@ -9,7 +9,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Plus, Search, ArrowUpDown, ChevronUp, ChevronDown, RefreshCw } from "lucide-react";
+import { Eye, Plus, Search, ArrowUpDown, ChevronUp, ChevronDown, RefreshCw, MoreHorizontal, ArrowRightLeft, Trash2, FileText, Wrench, CreditCard, SquarePen } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/EmptyState";
 import { AddVehicleDialog } from "@/components/AddVehicleDialog";
 import { VehicleStatusBadge } from "@/components/VehicleStatusBadge";
@@ -22,6 +29,9 @@ import { NetPLChip } from "@/components/NetPLChip";
 import { VehiclePhotoThumbnail } from "@/components/VehiclePhotoThumbnail";
 import { computeVehicleStatus, VehicleStatus, VehiclePLData, formatCurrency } from "@/lib/vehicleUtils";
 import { useActiveRentals } from "@/hooks/useActiveRentals";
+import { useActiveBorrowings } from "@/hooks/useActiveBorrowings";
+import { BorrowVehicleDialog } from "@/components/BorrowVehicleDialog";
+import { useVehicleBorrowings } from "@/hooks/useVehicleBorrowings";
 
 interface Vehicle {
   id: string;
@@ -37,6 +47,7 @@ interface Vehicle {
   warranty_end_date?: string;
   is_disposed: boolean;
   disposal_date?: string;
+  disposal_type?: string;
   status: string;
   photo_url?: string;
   has_logbook?: boolean;
@@ -77,6 +88,7 @@ export default function VehiclesListEnhanced() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [lendVehicle, setLendVehicle] = useState<{ id: string; reg: string } | null>(null);
 
   // Sync pagination state with URL params
   useEffect(() => {
@@ -135,6 +147,12 @@ export default function VehiclesListEnhanced() {
   });
 
   const { data: activeRentals = [] } = useActiveRentals();
+  const { data: activeBorrowings = [] } = useActiveBorrowings();
+
+  const {
+    borrowVehicleAsync,
+    isBorrowing,
+  } = useVehicleBorrowings(lendVehicle?.id || "");
 
   const isLoading = vehiclesLoading || plLoading;
 
@@ -142,7 +160,7 @@ export default function VehiclesListEnhanced() {
   const enhancedVehicles = useMemo(() => {
     return vehicles.map(vehicle => {
       const plEntry = plData.find(pl => pl.vehicle_id === vehicle.id);
-      const computedStatus = computeVehicleStatus(vehicle, activeRentals);
+      const computedStatus = computeVehicleStatus(vehicle, activeRentals, activeBorrowings);
       
       return {
         ...vehicle,
@@ -159,7 +177,7 @@ export default function VehiclesListEnhanced() {
         },
       };
     });
-  }, [vehicles, plData, activeRentals]);
+  }, [vehicles, plData, activeRentals, activeBorrowings]);
 
   // Filter and sort vehicles
   const filteredVehicles = useMemo(() => {
@@ -266,7 +284,6 @@ export default function VehiclesListEnhanced() {
       }
     });
 
-    console.log('Filtered and sorted vehicles:', filtered.map(v => ({ reg: v.reg, status: v.computed_status, sortField, sortDirection })));
     return filtered;
   }, [enhancedVehicles, filters, sortField, sortDirection, searchParams]);
 
@@ -275,7 +292,6 @@ export default function VehiclesListEnhanced() {
   const paginatedVehicles = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const paginated = filteredVehicles.slice(startIndex, startIndex + pageSize);
-    console.log(`Paginated vehicles (page ${currentPage}):`, paginated.map(v => ({ reg: v.reg, status: v.computed_status })));
     return paginated;
   }, [filteredVehicles, currentPage, pageSize, searchParams]);
 
@@ -297,9 +313,6 @@ export default function VehiclesListEnhanced() {
     setCurrentPage(1);
     
     setSearchParams(params);
-    
-    // Debug logging
-    console.log(`Sorting by ${field} in ${newDirection} direction`);
   };
 
   const handleRowClick = (vehicleId: string) => {
@@ -389,6 +402,7 @@ export default function VehiclesListEnhanced() {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="available">Available</SelectItem>
             <SelectItem value="rented">Rented</SelectItem>
+            <SelectItem value="borrowed">Borrowed</SelectItem>
             <SelectItem value="disposed">Disposed</SelectItem>
           </SelectContent>
         </Select>
@@ -499,7 +513,6 @@ export default function VehiclesListEnhanced() {
               </TableHeader>
               <TableBody>
                 {paginatedVehicles.map((vehicle, index) => {
-                  console.log(`Rendering vehicle ${index}:`, vehicle.reg, vehicle.computed_status);
                   return (
                     <TableRow 
                       key={`${vehicle.id}-${sortField}-${sortDirection}`}
@@ -536,7 +549,7 @@ export default function VehiclesListEnhanced() {
                       <AcquisitionBadge acquisitionType={vehicle.acquisition_type} />
                     </TableCell>
                     <TableCell>
-                      <VehicleStatusBadge status={vehicle.computed_status} />
+                      <VehicleStatusBadge status={vehicle.computed_status} disposalType={vehicle.disposal_type} />
                     </TableCell>
                     <TableCell>
                       <MOTTaxStatusChip 
@@ -561,16 +574,57 @@ export default function VehiclesListEnhanced() {
                        />
                      </TableCell>
                      <TableCell className="text-right">
-                       <Button
-                         variant="ghost"
-                         size="sm"
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           navigate(`/vehicles/${vehicle.id}`);
-                         }}
-                       >
-                         <Eye className="h-4 w-4" />
-                       </Button>
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={(e) => e.stopPropagation()}
+                           >
+                             <MoreHorizontal className="h-4 w-4" />
+                           </Button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem onClick={() => navigate(`/vehicles/${vehicle.id}`)}>
+                             <Eye className="h-4 w-4 mr-2" />
+                             View Details
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => navigate(`/vehicles/${vehicle.id}?tab=rentals`)}>
+                             <FileText className="h-4 w-4 mr-2" />
+                             Rentals
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => navigate(`/vehicles/${vehicle.id}?tab=services`)}>
+                             <Wrench className="h-4 w-4 mr-2" />
+                             Services
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => navigate(`/vehicles/${vehicle.id}?tab=pl`)}>
+                             <CreditCard className="h-4 w-4 mr-2" />
+                             P&L
+                           </DropdownMenuItem>
+                           {!vehicle.is_disposed && (
+                             <>
+                               <DropdownMenuSeparator />
+                               {vehicle.computed_status === 'Available' && (
+                                 <DropdownMenuItem onClick={() => setLendVehicle({ id: vehicle.id, reg: vehicle.reg })}>
+                                   <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                   Lend Vehicle
+                                 </DropdownMenuItem>
+                               )}
+                               <DropdownMenuItem onClick={() => navigate(`/vehicles/${vehicle.id}?tab=overview`)}>
+                                 <SquarePen className="h-4 w-4 mr-2" />
+                                 Edit
+                               </DropdownMenuItem>
+                               <DropdownMenuItem
+                                 className="text-destructive focus:text-destructive"
+                                 onClick={() => navigate(`/vehicles/${vehicle.id}?tab=overview`)}
+                               >
+                                 <Trash2 className="h-4 w-4 mr-2" />
+                                 Dispose
+                               </DropdownMenuItem>
+                             </>
+                           )}
+                         </DropdownMenuContent>
+                       </DropdownMenu>
                      </TableCell>
                    </TableRow>
                    );
@@ -639,6 +693,15 @@ export default function VehiclesListEnhanced() {
             </Button>
           </div>
         </div>
+      )}
+      {lendVehicle && (
+        <BorrowVehicleDialog
+          vehicleReg={lendVehicle.reg}
+          onBorrow={borrowVehicleAsync}
+          isBorrowing={isBorrowing}
+          open={!!lendVehicle}
+          onOpenChange={(open) => { if (!open) setLendVehicle(null); }}
+        />
       )}
     </div>
   );

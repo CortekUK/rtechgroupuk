@@ -218,7 +218,7 @@ const RentalsList = () => {
                   </TableHeader>
                   <TableBody>
                     {rentals.map((rental) => (
-                      <TableRow key={rental.id} className="hover:bg-muted/50">
+                      <TableRow key={rental.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => navigate(`/rentals/${rental.id}`)}>
                         <TableCell>
                           <Button
                             variant="link"
@@ -266,7 +266,7 @@ const RentalsList = () => {
                             {rental.computed_status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">

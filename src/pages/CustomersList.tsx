@@ -530,7 +530,7 @@ const CustomersList = () => {
                     const balanceData = customerBalances[customer.id];
                     
                     return (
-                      <TableRow key={customer.id} className="table-row">
+                      <TableRow key={customer.id} className="table-row cursor-pointer" onClick={() => navigate(`/customers/${customer.id}`)}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <button
@@ -598,7 +598,7 @@ const CustomersList = () => {
                             <CustomerBalanceChip balance={0} status="Settled" size="small" />
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
@@ -608,15 +608,6 @@ const CustomersList = () => {
                             >
                               <Edit className="h-4 w-4 mr-1" />
                               Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/customers/${customer.id}`)}
-                              aria-label={`View ${customer.name} details`}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
                             </Button>
                           </div>
                         </TableCell>

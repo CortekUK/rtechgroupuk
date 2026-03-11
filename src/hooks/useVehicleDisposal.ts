@@ -2,11 +2,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export type DisposalType = 'Sale' | 'Scrapped' | 'Written Off' | 'Trade-in' | 'Auction' | 'Other';
+
 export interface DisposalData {
   disposal_date: string;
   sale_proceeds: number;
   disposal_buyer?: string;
   disposal_notes?: string;
+  disposal_type: DisposalType;
 }
 
 export function useVehicleDisposal(vehicleId: string) {
@@ -21,6 +24,7 @@ export function useVehicleDisposal(vehicleId: string) {
         p_sale_proceeds: disposalData.sale_proceeds,
         p_buyer: disposalData.disposal_buyer || null,
         p_notes: disposalData.disposal_notes || null,
+        p_disposal_type: disposalData.disposal_type,
       });
 
       if (error) throw error;

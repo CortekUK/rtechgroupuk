@@ -482,10 +482,10 @@ export default function PlatesListEnhanced() {
                 </TableRow>
               ) : (
                 paginatedPlates.map((plate) => (
-                  <TableRow key={plate.id}>
-                    <TableCell>
+                  <TableRow key={plate.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleViewHistory(plate)}>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
-                        <code 
+                        <code
                           className="font-mono cursor-pointer hover:bg-muted px-1 rounded"
                           onClick={() => copyPlateNumber(plate.plate_number)}
                           title="Click to copy"
@@ -495,7 +495,7 @@ export default function PlatesListEnhanced() {
                         <Copy className="h-3 w-3 text-muted-foreground" />
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       {plate.vehicles ? (
                         <Button
                           variant="link"
@@ -523,7 +523,7 @@ export default function PlatesListEnhanced() {
                         {plate.notes || "-"}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       {plate.document_url ? (
                         <Button
                           variant="ghost"
@@ -536,7 +536,7 @@ export default function PlatesListEnhanced() {
                         <span className="text-muted-foreground">None</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">

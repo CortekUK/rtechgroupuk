@@ -225,7 +225,6 @@ export default function AddCustomerDocumentDialog({
       onOpenChange(false);
     },
     onError: (error) => {
-      console.error("Error saving document:", error);
       toast.error("Failed to save document");
     },
   });

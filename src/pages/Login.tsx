@@ -78,14 +78,9 @@ export default function Login() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('🔥 SIGN IN BUTTON CLICKED!');
-    console.log('Form data:', formData);
     e.preventDefault();
     setError('');
-    
-    // Temporarily skip validation to test if that's the issue
-    console.log('Skipping validation for testing...');
-    
+
     // // Validate form
     // const validationErrors = validateForm(formData);
     // console.log('Validation errors:', validationErrors);

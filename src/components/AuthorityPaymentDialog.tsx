@@ -108,7 +108,6 @@ export function AuthorityPaymentDialog({
       form.reset();
     },
     onError: (error: any) => {
-      console.error("Error recording authority payment:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to record authority payment. Please try again.",

@@ -167,7 +167,6 @@ export const FineAppealDialog = ({
       queryClient.invalidateQueries({ queryKey: ["fine-ledger", fineId] });
       queryClient.invalidateQueries({ queryKey: ["fines-list"] });
     } catch (error) {
-      console.error("Error processing appeal:", error);
       toast({
         title: "Error",
         description: "Failed to process request. Please try again.",

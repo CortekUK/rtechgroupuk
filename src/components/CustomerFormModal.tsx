@@ -188,7 +188,6 @@ export const CustomerFormModal = ({ open, onOpenChange, customer }: CustomerForm
         form.reset();
       }
     } catch (error) {
-      console.error('Error saving customer:', error);
       toast({
         title: "Error",
         description: `Failed to ${isEditing ? 'update' : 'add'} customer. Please try again.`,

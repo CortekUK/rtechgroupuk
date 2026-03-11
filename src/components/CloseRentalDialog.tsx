@@ -104,7 +104,6 @@ export const CloseRentalDialog = ({ open, onOpenChange, rental }: CloseRentalDia
       handleClose();
     },
     onError: (error) => {
-      console.error('Error closing rental:', error);
       toast({
         title: "Error",
         description: "Failed to close rental. Please try again.",

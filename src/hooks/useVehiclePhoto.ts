@@ -77,7 +77,6 @@ export const useVehiclePhoto = ({ vehicleId, vehicleReg, onPhotoUpdate }: UseVeh
       return true;
 
     } catch (error: any) {
-      console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload photo. Please try again.",
@@ -128,7 +127,6 @@ export const useVehiclePhoto = ({ vehicleId, vehicleReg, onPhotoUpdate }: UseVeh
       return true;
 
     } catch (error: any) {
-      console.error('Remove error:', error);
       toast({
         title: "Remove Failed",
         description: error.message || "Failed to remove photo. Please try again.",

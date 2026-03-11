@@ -126,7 +126,6 @@ export const VehiclePhotoUpload = ({
                     className="w-full h-full object-cover cursor-pointer"
                     onClick={() => setIsLightboxOpen(true)}
                     onError={(e) => {
-                      console.error('Image load error:', e);
                       e.currentTarget.style.display = 'none';
                     }}
                   />

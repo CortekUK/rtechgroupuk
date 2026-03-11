@@ -55,7 +55,6 @@ export function DataCleanupDialog({ open, onOpenChange }: DataCleanupDialogProps
       setConfirmationChecked(false);
       onOpenChange(false);
     } catch (error) {
-      console.error('Cleanup error:', error);
       toast({
         title: "Cleanup Failed", 
         description: "An unexpected error occurred during data cleanup.",

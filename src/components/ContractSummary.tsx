@@ -24,6 +24,7 @@ interface ContractSummaryProps {
   endDate?: Date;
   monthlyAmount?: number;
   initialFee?: number;
+  advancePayment?: number;
 }
 
 export const ContractSummary = ({
@@ -33,10 +34,15 @@ export const ContractSummary = ({
   endDate,
   monthlyAmount,
   initialFee,
+  advancePayment: advancePaymentProp,
 }: ContractSummaryProps) => {
   const termMonths = startDate && endDate ? differenceInMonths(endDate, startDate) : 0;
   const totalRentalCharges = termMonths * (monthlyAmount || 0);
   const totalInitialFee = initialFee || 0;
+  const advancePayment = advancePaymentProp || 0;
+  const approxMonths = monthlyAmount && monthlyAmount > 0 && advancePayment > 0
+    ? (advancePayment / monthlyAmount).toFixed(1)
+    : null;
 
   return (
     <Card className="h-fit">
@@ -117,6 +123,26 @@ export const ContractSummary = ({
                 {totalInitialFee > 0 ? `£${totalInitialFee.toFixed(2)}` : 'None'}
               </span>
             </div>
+
+            {advancePayment > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm">
+                  Advance Payment{approxMonths ? ` (~${approxMonths} mo)` : ''}:
+                </span>
+                <span className="font-medium">
+                  £{advancePayment.toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {(totalInitialFee > 0 || advancePayment > 0) && (
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="text-sm font-medium">Total Due at Signing:</span>
+                <span className="font-semibold text-primary">
+                  £{(totalInitialFee + advancePayment).toFixed(2)}
+                </span>
+              </div>
+            )}
 
             {termMonths > 0 && (
               <div className="flex justify-between items-center pt-2 border-t">

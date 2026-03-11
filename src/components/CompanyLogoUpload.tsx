@@ -69,7 +69,6 @@ export const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
         description: "Company logo uploaded successfully",
       });
     } catch (error: any) {
-      console.error('Error uploading logo:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload logo",
@@ -99,7 +98,6 @@ export const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
         description: "Company logo removed successfully",
       });
     } catch (error: any) {
-      console.error('Error removing logo:', error);
       toast({
         title: "Remove Failed",
         description: "Failed to remove logo",

@@ -18,6 +18,7 @@ interface Vehicle {
   reg: string;
   make?: string;
   model?: string;
+  disposal_type?: string;
 }
 
 interface VehicleUndoDisposalDialogProps {
@@ -61,8 +62,8 @@ export function VehicleUndoDisposalDialog({ vehicle, onUndo }: VehicleUndoDispos
             <div className="text-sm text-yellow-800">
               <p className="font-medium mb-1">Warning</p>
               <p>
-                This will remove the disposal record, restore the vehicle to "Available" status, 
-                and delete any associated P&L gain/loss entries. This action cannot be undone.
+                This will undo the {vehicle.disposal_type?.toLowerCase() || 'disposal'}, restore the vehicle to "Available" status,
+                and delete any associated P&L disposal entries. This action cannot be undone.
               </p>
             </div>
           </div>

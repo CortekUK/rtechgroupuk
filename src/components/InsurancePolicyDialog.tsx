@@ -242,7 +242,6 @@ export function InsurancePolicyDialog({
       form.reset();
     },
     onError: (error) => {
-      console.error("Error saving policy:", error);
       toast.error(error.message || "Failed to save policy");
     },
   });

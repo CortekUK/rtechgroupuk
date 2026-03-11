@@ -94,7 +94,6 @@ const RemindersPage = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating reminder:", error);
       toast({
         title: "Error",
         description: "Failed to update reminder. Please try again.",

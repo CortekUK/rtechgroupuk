@@ -571,6 +571,230 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          created_at: string | null
+          customer_address: string | null
+          customer_email: string | null
+          customer_id: string
+          customer_name: string
+          customer_phone: string | null
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          line_items: Json
+          notes: string | null
+          rental_end_date: string | null
+          rental_id: string | null
+          rental_start_date: string | null
+          status: string
+          subtotal: number
+          tax_amount: number | null
+          tax_rate: number | null
+          total_amount: number
+          updated_at: string | null
+          vehicle_id: string | null
+          vehicle_make: string | null
+          vehicle_model: string | null
+          vehicle_reg: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_id: string
+          customer_name: string
+          customer_phone?: string | null
+          due_date: string
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          rental_end_date?: string | null
+          rental_id?: string | null
+          rental_start_date?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string | null
+          vehicle_id?: string | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          vehicle_reg?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_id?: string
+          customer_name?: string
+          customer_phone?: string | null
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          rental_end_date?: string | null
+          rental_id?: string | null
+          rental_start_date?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string | null
+          vehicle_id?: string | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          vehicle_reg?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_customer_credit"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "view_aging_receivables"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "invoices_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "rentals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "v_rental_credit"
+            referencedColumns: ["rental_id"]
+          },
+          {
+            foreignKeyName: "invoices_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "view_rentals_export"
+            referencedColumns: ["rental_id"]
+          },
+          {
+            foreignKeyName: "invoices_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_pnl_rollup"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "invoices_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "view_pl_by_vehicle"
+            referencedColumns: ["vehicle_id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          company: string | null
+          converted_at: string | null
+          converted_to_customer_id: string | null
+          created_at: string
+          email: string | null
+          expected_value: number | null
+          follow_up_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          company?: string | null
+          converted_at?: string | null
+          converted_to_customer_id?: string | null
+          created_at?: string
+          email?: string | null
+          expected_value?: number | null
+          follow_up_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          company?: string | null
+          converted_at?: string | null
+          converted_to_customer_id?: string | null
+          created_at?: string
+          email?: string | null
+          expected_value?: number | null
+          follow_up_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_converted_to_customer_id_fkey"
+            columns: ["converted_to_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_converted_to_customer_id_fkey"
+            columns: ["converted_to_customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_customer_credit"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "leads_converted_to_customer_id_fkey"
+            columns: ["converted_to_customer_id"]
+            isOneToOne: false
+            referencedRelation: "view_aging_receivables"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
       ledger_entries: {
         Row: {
           amount: number
@@ -1544,11 +1768,17 @@ export type Database = {
         Row: {
           created_at: string | null
           customer_id: string | null
+          document_status: string | null
+          docusign_envelope_id: string | null
           end_date: string | null
+          envelope_completed_at: string | null
+          envelope_created_at: string | null
+          envelope_sent_at: string | null
           id: string
           monthly_amount: number
           rental_number: string | null
           schedule: string | null
+          signed_document_id: string | null
           start_date: string
           status: string | null
           updated_at: string
@@ -1557,11 +1787,17 @@ export type Database = {
         Insert: {
           created_at?: string | null
           customer_id?: string | null
+          document_status?: string | null
+          docusign_envelope_id?: string | null
           end_date?: string | null
+          envelope_completed_at?: string | null
+          envelope_created_at?: string | null
+          envelope_sent_at?: string | null
           id?: string
           monthly_amount: number
           rental_number?: string | null
           schedule?: string | null
+          signed_document_id?: string | null
           start_date: string
           status?: string | null
           updated_at?: string
@@ -1570,11 +1806,17 @@ export type Database = {
         Update: {
           created_at?: string | null
           customer_id?: string | null
+          document_status?: string | null
+          docusign_envelope_id?: string | null
           end_date?: string | null
+          envelope_completed_at?: string | null
+          envelope_created_at?: string | null
+          envelope_sent_at?: string | null
           id?: string
           monthly_amount?: number
           rental_number?: string | null
           schedule?: string | null
+          signed_document_id?: string | null
           start_date?: string
           status?: string | null
           updated_at?: string
@@ -1601,6 +1843,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_aging_receivables"
             referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "rentals_signed_document_id_fkey"
+            columns: ["signed_document_id"]
+            isOneToOne: false
+            referencedRelation: "customer_documents"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rentals_vehicle_id_fkey"
@@ -1745,6 +1994,94 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      vehicle_borrowings: {
+        Row: {
+          actual_return_date: string | null
+          borrowed_date: string
+          borrower_name: string
+          created_at: string | null
+          customer_id: string | null
+          expected_return_date: string | null
+          id: string
+          notes: string | null
+          purpose: string | null
+          returned_by: string | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          actual_return_date?: string | null
+          borrowed_date?: string
+          borrower_name: string
+          created_at?: string | null
+          customer_id?: string | null
+          expected_return_date?: string | null
+          id?: string
+          notes?: string | null
+          purpose?: string | null
+          returned_by?: string | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          actual_return_date?: string | null
+          borrowed_date?: string
+          borrower_name?: string
+          created_at?: string | null
+          customer_id?: string | null
+          expected_return_date?: string | null
+          id?: string
+          notes?: string | null
+          purpose?: string | null
+          returned_by?: string | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_borrowings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_borrowings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_customer_credit"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "vehicle_borrowings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "view_aging_receivables"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "vehicle_borrowings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_pnl_rollup"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "vehicle_borrowings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_borrowings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "view_pl_by_vehicle"
+            referencedColumns: ["vehicle_id"]
+          },
+        ]
       }
       vehicle_events: {
         Row: {
@@ -1920,6 +2257,55 @@ export type Database = {
           },
         ]
       }
+      vehicle_photos: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_primary: boolean | null
+          photo_url: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean | null
+          photo_url: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean | null
+          photo_url?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_photos_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_pnl_rollup"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "vehicle_photos_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_photos_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "view_pl_by_vehicle"
+            referencedColumns: ["vehicle_id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           acquisition_date: string | null
@@ -1932,6 +2318,7 @@ export type Database = {
           disposal_buyer: string | null
           disposal_date: string | null
           disposal_notes: string | null
+          disposal_type: string | null
           finance_start_date: string | null
           fuel_type: string | null
           ghost_code: string | null
@@ -1978,6 +2365,7 @@ export type Database = {
           disposal_buyer?: string | null
           disposal_date?: string | null
           disposal_notes?: string | null
+          disposal_type?: string | null
           finance_start_date?: string | null
           fuel_type?: string | null
           ghost_code?: string | null
@@ -2024,6 +2412,7 @@ export type Database = {
           disposal_buyer?: string | null
           disposal_date?: string | null
           disposal_notes?: string | null
+          disposal_type?: string | null
           finance_start_date?: string | null
           fuel_type?: string | null
           ghost_code?: string | null
@@ -2060,147 +2449,6 @@ export type Database = {
           year?: number | null
         }
         Relationships: []
-      }
-      vehicle_photos: {
-        Row: {
-          id: string
-          vehicle_id: string
-          photo_url: string
-          display_order: number
-          is_primary: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          vehicle_id: string
-          photo_url: string
-          display_order?: number
-          is_primary?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          vehicle_id?: string
-          photo_url?: string
-          display_order?: number
-          is_primary?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vehicle_photos_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      invoices: {
-        Row: {
-          id: string
-          invoice_number: string
-          rental_id: string | null
-          customer_id: string
-          vehicle_id: string | null
-          issue_date: string
-          due_date: string
-          customer_name: string
-          customer_email: string | null
-          customer_phone: string | null
-          customer_address: string | null
-          vehicle_reg: string | null
-          vehicle_make: string | null
-          vehicle_model: string | null
-          rental_start_date: string | null
-          rental_end_date: string | null
-          line_items: Json
-          subtotal: number
-          tax_rate: number | null
-          tax_amount: number | null
-          total_amount: number
-          status: string
-          notes: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          invoice_number: string
-          rental_id?: string | null
-          customer_id: string
-          vehicle_id?: string | null
-          issue_date?: string
-          due_date: string
-          customer_name: string
-          customer_email?: string | null
-          customer_phone?: string | null
-          customer_address?: string | null
-          vehicle_reg?: string | null
-          vehicle_make?: string | null
-          vehicle_model?: string | null
-          rental_start_date?: string | null
-          rental_end_date?: string | null
-          line_items?: Json
-          subtotal?: number
-          tax_rate?: number | null
-          tax_amount?: number | null
-          total_amount?: number
-          status?: string
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          invoice_number?: string
-          rental_id?: string | null
-          customer_id?: string
-          vehicle_id?: string | null
-          issue_date?: string
-          due_date?: string
-          customer_name?: string
-          customer_email?: string | null
-          customer_phone?: string | null
-          customer_address?: string | null
-          vehicle_reg?: string | null
-          vehicle_make?: string | null
-          vehicle_model?: string | null
-          rental_start_date?: string | null
-          rental_end_date?: string | null
-          line_items?: Json
-          subtotal?: number
-          tax_rate?: number | null
-          tax_amount?: number | null
-          total_amount?: number
-          status?: string
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_rental_id_fkey"
-            columns: ["rental_id"]
-            isOneToOne: false
-            referencedRelation: "rentals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
       }
     }
     Views: {
@@ -2586,10 +2834,7 @@ export type Database = {
           username: string
         }[]
       }
-      apply_payment: {
-        Args: { payment_id: string }
-        Returns: undefined
-      }
+      apply_payment: { Args: { payment_id: string }; Returns: undefined }
       apply_payment_fully: {
         Args: { p_payment_id: string }
         Returns: undefined
@@ -2598,25 +2843,19 @@ export type Database = {
         Args: { p_rental_id?: string }
         Returns: undefined
       }
-      attach_payments_to_rentals: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      attach_payments_to_rentals: { Args: never; Returns: undefined }
       backfill_payment_rental_ids: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           payments_skipped: number
           payments_updated: number
         }[]
       }
       backfill_rental_charges_first_month_only: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: undefined
       }
-      backfill_rental_charges_full: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      backfill_rental_charges_full: { Args: never; Returns: undefined }
       calculate_vehicle_book_cost: {
         Args: { p_vehicle_id: string }
         Returns: number
@@ -2636,24 +2875,31 @@ export type Database = {
           overlapping_start_date: string
         }[]
       }
-      dispose_vehicle: {
-        Args: {
-          p_buyer?: string
-          p_disposal_date: string
-          p_notes?: string
-          p_sale_proceeds: number
-          p_vehicle_id: string
-        }
-        Returns: Json
-      }
-      fine_void_charge: {
-        Args: { f_id: string }
-        Returns: undefined
-      }
-      generate_daily_reminders: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      dispose_vehicle:
+        | {
+            Args: {
+              p_buyer?: string
+              p_disposal_date: string
+              p_notes?: string
+              p_sale_proceeds: number
+              p_vehicle_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_buyer?: string
+              p_disposal_date: string
+              p_disposal_type?: string
+              p_notes?: string
+              p_sale_proceeds: number
+              p_vehicle_id: string
+            }
+            Returns: Json
+          }
+      fine_void_charge: { Args: { f_id: string }; Returns: undefined }
+      generate_daily_reminders: { Args: never; Returns: undefined }
+      generate_invoice_number: { Args: never; Returns: string }
       generate_monthly_charges: {
         Args: { rental_id: string }
         Returns: undefined
@@ -2662,14 +2908,8 @@ export type Database = {
         Args: { r_id: string }
         Returns: undefined
       }
-      generate_rental_charges: {
-        Args: { r_id: string }
-        Returns: undefined
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_rental_charges: { Args: { r_id: string }; Returns: undefined }
+      get_current_user_role: { Args: never; Returns: string }
       get_customer_balance_with_status: {
         Args: { customer_id_param: string }
         Returns: {
@@ -2705,7 +2945,7 @@ export type Database = {
         Returns: number
       }
       get_pending_charges_for_reminders: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           amount: number
           charge_id: string
@@ -2725,53 +2965,24 @@ export type Database = {
           whatsapp_opt_in: boolean
         }[]
       }
-      get_rental_credit: {
-        Args: { rental_id_param: string }
-        Returns: number
-      }
-      get_user_role: {
-        Args: { user_id: string }
-        Returns: string
-      }
+      get_rental_credit: { Args: { rental_id_param: string }; Returns: number }
+      get_user_role: { Args: { user_id: string }; Returns: string }
       has_any_role: {
         Args: { _roles: string[]; _user_id: string }
         Returns: boolean
       }
-      has_role: {
-        Args: { _role: string; _user_id: string }
-        Returns: boolean
-      }
-      has_upfront_finance_entry: {
-        Args: { v_id: string }
-        Returns: boolean
-      }
-      hash_password: {
-        Args: { password: string }
-        Returns: string
-      }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      payment_apply_fifo: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      payment_apply_fifo_v2: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      payment_auto_apply_due_credit: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      pnl_post_acquisition: {
-        Args: { v_id: string }
-        Returns: undefined
-      }
-      process_payment_transaction: {
-        Args:
-          | {
+      has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      has_upfront_finance_entry: { Args: { v_id: string }; Returns: boolean }
+      hash_password: { Args: { password: string }; Returns: string }
+      is_current_user_admin: { Args: never; Returns: boolean }
+      payment_apply_fifo: { Args: { p_id: string }; Returns: undefined }
+      payment_apply_fifo_v2: { Args: { p_id: string }; Returns: undefined }
+      payment_auto_apply_due_credit: { Args: never; Returns: undefined }
+      pnl_post_acquisition: { Args: { v_id: string }; Returns: undefined }
+      process_payment_transaction:
+        | { Args: { p_payment_id: string }; Returns: Json }
+        | {
+            Args: {
               p_amount: number
               p_customer_id: string
               p_payment_date: string
@@ -2780,15 +2991,11 @@ export type Database = {
               p_rental_id: string
               p_vehicle_id: string
             }
-          | { p_payment_id: string }
-        Returns: Json
-      }
-      reapply_all_payments: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+            Returns: Json
+          }
+      reapply_all_payments: { Args: never; Returns: undefined }
       reapply_all_payments_v2: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           customers_affected: number
           payments_processed: number
@@ -2796,7 +3003,7 @@ export type Database = {
         }[]
       }
       recalculate_insurance_status: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           expired_policies: number
           expiring_soon_policies: number
@@ -2823,10 +3030,7 @@ export type Database = {
         Args: { amt: number; due: string; r_id: string }
         Returns: string
       }
-      undo_vehicle_disposal: {
-        Args: { p_vehicle_id: string }
-        Returns: Json
-      }
+      undo_vehicle_disposal: { Args: { p_vehicle_id: string }; Returns: Json }
       update_customer_balance: {
         Args: { customer_id: string }
         Returns: undefined

@@ -118,7 +118,6 @@ export const useVehiclePhotos = ({ vehicleId, vehicleReg }: UseVehiclePhotosOpti
 
       return true;
     } catch (error: any) {
-      console.error("Upload error:", error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload photo. Please try again.",
@@ -294,7 +293,6 @@ export const useVehiclePhotos = ({ vehicleId, vehicleReg }: UseVehiclePhotosOpti
 
       return true;
     } catch (error: any) {
-      console.error("Delete error:", error);
       toast({
         title: "Delete Failed",
         description: error.message || "Failed to delete photo. Please try again.",
@@ -342,7 +340,6 @@ export const useVehiclePhotos = ({ vehicleId, vehicleReg }: UseVehiclePhotosOpti
 
       return true;
     } catch (error: any) {
-      console.error("Set primary error:", error);
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update primary photo.",
@@ -368,7 +365,6 @@ export const useVehiclePhotos = ({ vehicleId, vehicleReg }: UseVehiclePhotosOpti
 
       return true;
     } catch (error: any) {
-      console.error("Reorder error:", error);
       toast({
         title: "Reorder Failed",
         description: error.message || "Failed to reorder photos.",

@@ -31,15 +31,32 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useVehicleDisposal, DisposalData } from "@/hooks/useVehicleDisposal";
+import { useVehicleDisposal, DisposalData, DisposalType } from "@/hooks/useVehicleDisposal";
 import { Card, CardContent } from "@/components/ui/card";
 
+const DISPOSAL_TYPES: { value: DisposalType; label: string; proceedsLabel: string }[] = [
+  { value: 'Sale', label: 'Sale', proceedsLabel: 'Sale Proceeds' },
+  { value: 'Scrapped', label: 'Scrapped', proceedsLabel: 'Scrap Value' },
+  { value: 'Written Off', label: 'Written Off', proceedsLabel: 'Insurance Payout' },
+  { value: 'Trade-in', label: 'Trade-in', proceedsLabel: 'Trade-in Value' },
+  { value: 'Auction', label: 'Auction', proceedsLabel: 'Auction Proceeds' },
+  { value: 'Other', label: 'Other', proceedsLabel: 'Proceeds' },
+];
+
 const disposalSchema = z.object({
+  disposal_type: z.string().default('Sale'),
   disposal_date: z.date({
     required_error: "Disposal date is required.",
   }),
-  sale_proceeds: z.number().min(0, "Sale proceeds must be positive"),
+  sale_proceeds: z.number().min(0, "Proceeds must be positive"),
   disposal_buyer: z.string().optional(),
   disposal_notes: z.string().optional(),
 });
@@ -80,6 +97,7 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
   const form = useForm<DisposalFormData>({
     resolver: zodResolver(disposalSchema),
     defaultValues: {
+      disposal_type: 'Sale',
       disposal_date: new Date(),
       sale_proceeds: 0,
       disposal_buyer: "",
@@ -88,6 +106,8 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
   });
 
   const saleProceeds = form.watch("sale_proceeds");
+  const disposalType = form.watch("disposal_type") as DisposalType;
+  const proceedsLabel = DISPOSAL_TYPES.find(t => t.value === disposalType)?.proceedsLabel || 'Sale Proceeds';
 
   useEffect(() => {
     if (open && bookCost === null) {
@@ -115,6 +135,7 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
         sale_proceeds: data.sale_proceeds,
         disposal_buyer: data.disposal_buyer,
         disposal_notes: data.disposal_notes,
+        disposal_type: data.disposal_type as DisposalType,
       };
 
       await disposeVehicle(disposalData);
@@ -123,7 +144,7 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
       onDisposal?.();
       form.reset();
     } catch (error) {
-      console.error('Failed to dispose vehicle:', error);
+      // Error already handled via toast in useVehicleDisposal hook
     }
   };
 
@@ -153,6 +174,31 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="disposal_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Disposal Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select disposal type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {DISPOSAL_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="disposal_date"
@@ -201,7 +247,7 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
               name="sale_proceeds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Sale Proceeds (£)</FormLabel>
+                  <FormLabel>{proceedsLabel} (£)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -264,7 +310,7 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
                         )}
                         {saleProceeds > 0 && (
                           <div className="flex justify-between">
-                            <span>Sale Proceeds:</span>
+                            <span>{proceedsLabel}:</span>
                             <span className="font-mono">£{saleProceeds.toFixed(2)}</span>
                           </div>
                         )}
@@ -275,7 +321,7 @@ export function VehicleDisposalDialog({ vehicle, onDisposal }: VehicleDisposalDi
                           )}>
                             <span>{gainLoss > 0 ? "Gain:" : gainLoss < 0 ? "Loss:" : "Break-even:"}</span>
                             <span className="font-mono">
-                              {gainLoss !== 0 && (gainLoss > 0 ? "+" : "")}${Math.abs(gainLoss).toFixed(2)}
+                              {gainLoss !== 0 && (gainLoss > 0 ? "+" : "")}£{Math.abs(gainLoss).toFixed(2)}
                             </span>
                           </div>
                         )}

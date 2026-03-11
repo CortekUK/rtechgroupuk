@@ -193,8 +193,6 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
   const currentOpen = open !== undefined ? open : isOpen;
 
   const onSubmit = async (data: VehicleFormData) => {
-    console.log('=== FORM SUBMITTED ===');
-    console.log('Form data:', data);
     setLoading(true);
 
     try {
@@ -300,8 +298,6 @@ export const EditVehicleDialogEnhanced = ({ vehicle, open, onOpenChange }: EditV
           <form onSubmit={form.handleSubmit(
             onSubmit,
             (errors) => {
-              console.log('=== VALIDATION FAILED ===');
-              console.log('Validation errors:', errors);
             }
           )} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">

@@ -44,7 +44,6 @@ export const VehiclePhotoThumbnail = ({
           alt={`Photo of ${vehicleReg}`}
           className="w-full h-full object-cover"
           onError={(e) => {
-            console.error('Thumbnail image load error:', e);
             // Hide the image and show placeholder
             e.currentTarget.style.display = 'none';
           }}

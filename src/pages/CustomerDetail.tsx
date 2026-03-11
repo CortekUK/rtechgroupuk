@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, CreditCard, FileText, Plus, Upload, Car, AlertTriangle, Eye, Download, Edit, Trash2, User, Mail, Phone, CalendarPlus, PoundSterling, FolderOpen, Receipt, CreditCard as PaymentIcon } from "lucide-react";
+import { ArrowLeft, CreditCard, FileText, Plus, Upload, Car, AlertTriangle, Eye, Download, Edit, Trash2, User, Mail, Phone, CalendarPlus, PoundSterling, FolderOpen, Receipt, CreditCard as PaymentIcon, Undo2 } from "lucide-react";
 import { TruncatedCell } from "@/components/TruncatedCell";
 import { EmptyState } from "@/components/EmptyState";
 import { CustomerBalanceChip } from "@/components/CustomerBalanceChip";
@@ -24,6 +24,7 @@ import { useCustomerVehicleHistory } from "@/hooks/useCustomerVehicleHistory";
 import AddCustomerDocumentDialog from "@/components/AddCustomerDocumentDialog";
 import { AddPaymentDialog } from "@/components/AddPaymentDialog";
 import { AddFineDialog } from "@/components/AddFineDialog";
+import { IssueRefundDialog } from "@/components/IssueRefundDialog";
 import { CustomerFormModal } from "@/components/CustomerFormModal";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
 import { DocumentSigningStatusBadge } from "@/components/DocumentSigningStatusBadge.tsx";
@@ -59,6 +60,7 @@ const CustomerDetail = () => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [fineDialogOpen, setFineDialogOpen] = useState(false);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
 
   const { data: customer, isLoading } = useQuery({
     queryKey: ["customer", id],
@@ -129,9 +131,9 @@ const CustomerDetail = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto p-6 pt-8">
+    <div className="space-y-8 mx-auto px-4 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => navigate("/customers")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -151,7 +153,7 @@ const CustomerDetail = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => navigate(`/rentals/new?customer=${id}`)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Rental
@@ -160,6 +162,12 @@ const CustomerDetail = () => {
             <PoundSterling className="h-4 w-4 mr-2" />
             Add Payment
           </Button>
+          {customerBalanceData?.status === 'In Credit' && (
+            <Button variant="outline" onClick={() => setRefundDialogOpen(true)}>
+              <Undo2 className="h-4 w-4 mr-2" />
+              Issue Refund
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setFineDialogOpen(true)}>
             <AlertTriangle className="h-4 w-4 mr-2" />
             Upload Fine
@@ -445,16 +453,15 @@ const CustomerDetail = () => {
                         <TableHead className="font-semibold">End Date</TableHead>
                         <TableHead className="font-semibold text-right">Monthly Amount</TableHead>
                         <TableHead className="font-semibold">Status</TableHead>
-                        <TableHead className="font-semibold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {rentals.map((rental) => (
-                        <TableRow key={rental.id} className="hover:bg-muted/50 transition-colors">
+                        <TableRow key={rental.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/rentals/${rental.id}`)}>
                           <TableCell className="font-medium">
                             <div>
                               <div className="font-semibold text-foreground">{rental.vehicle.reg}</div>
-                              <TruncatedCell 
+                              <TruncatedCell
                                 content={`${rental.vehicle.make} ${rental.vehicle.model}`}
                                 maxLength={25}
                                 className="text-sm text-muted-foreground"
@@ -474,17 +481,6 @@ const CustomerDetail = () => {
                             <Badge variant={rental.status === 'Active' ? 'default' : 'secondary'}>
                               {rental.status}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate(`/rentals/${rental.id}`)}
-                              className="hover:bg-primary hover:text-primary-foreground"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -616,7 +612,7 @@ const CustomerDetail = () => {
                     </TableHeader>
                     <TableBody>
                       {fines.map((fine) => (
-                        <TableRow key={fine.id} className="hover:bg-muted/50 transition-colors">
+                        <TableRow key={fine.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/fines/${fine.id}`)}>
                           <TableCell className="font-medium">{fine.type}</TableCell>
                           <TableCell>
                             {fine.reference_no ? (
@@ -695,16 +691,15 @@ const CustomerDetail = () => {
                         <TableHead className="font-semibold">End Date</TableHead>
                         <TableHead className="font-semibold text-right">Monthly Amount</TableHead>
                         <TableHead className="font-semibold">Status</TableHead>
-                        <TableHead className="font-semibold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {vehicleHistory.map((history) => (
-                        <TableRow key={history.rental_id} className="hover:bg-muted/50 transition-colors">
+                        <TableRow key={history.rental_id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/vehicles/${history.vehicle_id}`)}>
                           <TableCell>
                             <div>
                               <div className="font-semibold text-foreground">{history.vehicle_reg}</div>
-                              <TruncatedCell 
+                              <TruncatedCell
                                 content={`${history.vehicle_make} ${history.vehicle_model}`}
                                 maxLength={25}
                                 className="text-sm text-muted-foreground"
@@ -724,17 +719,6 @@ const CustomerDetail = () => {
                             <Badge variant={history.status === 'Active' ? 'default' : 'secondary'}>
                               {history.status}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate(`/vehicles/${history.vehicle_id}`)}
-                              className="hover:bg-primary hover:text-primary-foreground"
-                            >
-                              <Car className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -894,6 +878,15 @@ const CustomerDetail = () => {
         onOpenChange={setDocumentDialogOpen}
         customerId={id!}
       />
+
+      {customerBalanceData?.status === 'In Credit' && (
+        <IssueRefundDialog
+          open={refundDialogOpen}
+          onOpenChange={setRefundDialogOpen}
+          customerId={id!}
+          creditBalance={customerBalanceData.balance}
+        />
+      )}
     </div>
   );
 };

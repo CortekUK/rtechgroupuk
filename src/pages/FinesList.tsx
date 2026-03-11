@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, Plus, Eye, Filter, MoreVertical, CreditCard, Ban, Receipt, Scale, ArrowUpDown } from "lucide-react";
+import { AlertTriangle, Plus, Eye, Filter, MoreHorizontal, CreditCard, Ban, Receipt, Scale, ArrowUpDown } from "lucide-react";
 import { FineStatusBadge } from "@/components/FineStatusBadge";
 import { FineKPIs } from "@/components/FineKPIs";
 import { FineFilters, FineFilterState } from "@/components/FineFilters";
@@ -171,15 +171,16 @@ const FinesList = () => {
     const canAppeal = fine.status === 'Open';
 
     return (
-      <TableRow 
-        key={fine.id} 
+      <TableRow
+        key={fine.id}
         className={cn(
-          "hover:bg-muted/50",
+          "hover:bg-muted/50 cursor-pointer",
           fine.isOverdue && "border-l-4 border-l-destructive",
           selectedFines.includes(fine.id) && "bg-primary/5"
         )}
+        onClick={() => navigate(`/fines/${fine.id}`)}
       >
-        <TableCell className="w-12">
+        <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={selectedFines.includes(fine.id)}
             onCheckedChange={(checked) => handleSelectFine(fine.id, checked as boolean)}
@@ -236,21 +237,12 @@ const FinesList = () => {
           £{Number(fine.amount).toLocaleString()}
         </TableCell>
         
-        <TableCell className="text-left">
+        <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/fines/${fine.id}`)}
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              View
-            </Button>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  <MoreVertical className="h-4 w-4" />
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

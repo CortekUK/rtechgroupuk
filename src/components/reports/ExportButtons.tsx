@@ -60,7 +60,6 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
       });
 
     } catch (error) {
-      console.error('Export error:', error);
       toast({
         title: 'Export failed',
         description: 'There was an error generating the export. Please try again.',

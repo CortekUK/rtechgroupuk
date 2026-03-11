@@ -192,7 +192,6 @@ export const AddLeadDialog = ({ open, onOpenChange, lead }: AddLeadDialogProps) 
         form.reset();
       }
     } catch (error) {
-      console.error('Error saving lead:', error);
       toast({
         title: "Error",
         description: `Failed to ${isEditing ? 'update' : 'add'} lead. Please try again.`,

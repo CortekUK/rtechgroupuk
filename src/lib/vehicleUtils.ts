@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type VehicleStatus = 'Available' | 'Rented' | 'Disposed';
+export type VehicleStatus = 'Available' | 'Rented' | 'Borrowed' | 'Disposed';
 
 export interface VehicleWithStatus {
   id: string;
@@ -42,7 +42,8 @@ export interface VehiclePLData {
  */
 export function computeVehicleStatus(
   vehicle: { id: string; is_disposed: boolean; disposal_date?: string; status?: string },
-  activeRentals: { vehicle_id: string }[]
+  activeRentals: { vehicle_id: string }[],
+  activeBorrowings: { vehicle_id: string }[] = []
 ): VehicleStatus {
   // Check if disposed (highest priority)
   if (vehicle.is_disposed || vehicle.disposal_date) {
@@ -58,6 +59,15 @@ export function computeVehicleStatus(
   const isRented = activeRentals.some(rental => rental.vehicle_id === vehicle.id);
   if (isRented) {
     return 'Rented';
+  }
+
+  // Check if borrowed - database status or active borrowing records
+  if (vehicle.status?.toLowerCase() === 'borrowed') {
+    return 'Borrowed';
+  }
+  const isBorrowed = activeBorrowings.some(b => b.vehicle_id === vehicle.id);
+  if (isBorrowed) {
+    return 'Borrowed';
   }
 
   // Use database status for Available as well
@@ -86,19 +96,6 @@ export function getContractTotal(vehicle: {
   const initial = Number(vehicle.initial_payment) || 0;
   const monthly = (Number(vehicle.monthly_payment) || 0) * (Number(vehicle.term_months) || 0);
   const balloon = Number(vehicle.balloon) || 0;
-  
-  // Debug logging
-  console.log('getContractTotal debug:', {
-    acquisition_type: vehicle.acquisition_type,
-    initial_payment: vehicle.initial_payment,
-    monthly_payment: vehicle.monthly_payment,
-    term_months: vehicle.term_months,
-    balloon: vehicle.balloon,
-    calculated_initial: initial,
-    calculated_monthly: monthly,
-    calculated_balloon: balloon,
-    calculated_total: initial + monthly + balloon
-  });
   
   return initial + monthly + balloon;
 }

@@ -113,8 +113,6 @@ export const useCustomerBalanceWithStatus = (customerId: string | undefined) => 
     queryFn: async () => {
       if (!customerId) return null;
       
-      console.log('🔍 Fetching balance for customer:', customerId);
-      
       const { data, error } = await supabase
         .from("ledger_entries")
         .select("id, type, amount, due_date, payment_id, category")
@@ -178,15 +176,6 @@ export const useCustomerBalanceWithStatus = (customerId: string | undefined) => 
       } else {
         status = 'In Credit';
       }
-      
-      console.log('💰 Balance calculation result:', {
-        customerId,
-        balance,
-        absoluteBalance: Math.abs(balance),
-        status,
-        totalCharges,
-        totalPayments
-      });
       
       return {
         balance: Math.abs(balance), // Always return positive for display
