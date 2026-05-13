@@ -20,6 +20,18 @@ interface CreateEnvelopeResponse {
   detail?: string;
 }
 
+// Build a single-line, HTML-safe address string from structured customer columns
+function formatCustomerAddress(customer: any): string {
+  const parts = [
+    customer?.address_line1,
+    customer?.address_line2,
+    customer?.city,
+    customer?.postcode,
+    customer?.country,
+  ].filter((p) => typeof p === 'string' && p.trim().length > 0);
+  return parts.join(', ');
+}
+
 // Generate rental agreement document content
 function generateRentalAgreementPDF(rental: any, customer: any, vehicle: any): string {
   const startDate = new Date(rental.start_date).toLocaleDateString('en-GB');
@@ -122,6 +134,7 @@ function generateRentalAgreementPDF(rental: any, customer: any, vehicle: any): s
 <h2>PARTIES TO AGREEMENT</h2>
 <p><strong>Company:</strong> RTech Group</p>
 <p><strong>Customer:</strong> ${customer.name}</p>
+${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${formatCustomerAddress(customer)}</p>` : ''}
 
 <h2>KEY FINANCIAL INFORMATION</h2>
 <table>
@@ -571,7 +584,7 @@ async function createDocuSignEnvelope(supabase: any, rentalId: string): Promise<
       .from('rentals')
       .select(`
         *,
-        customers:customer_id (id, name, email, phone, customer_type, type),
+        customers:customer_id (id, name, email, phone, customer_type, type, address_line1, address_line2, city, postcode, country),
         vehicles:vehicle_id (id, reg, make, model, colour)
       `)
       .eq('id', rentalId)

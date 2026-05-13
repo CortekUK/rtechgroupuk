@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Users, Mail, Phone, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Mail, Phone, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,6 +26,12 @@ const customerSchema = z.object({
   high_switcher: z.boolean(),
   status: z.enum(['Active', 'Inactive']),
   notes: z.string().optional(),
+  // Address fields
+  address_line1: z.string().optional(),
+  address_line2: z.string().optional(),
+  city: z.string().optional(),
+  postcode: z.string().optional(),
+  country: z.string().optional(),
   // Next of Kin fields
   nok_full_name: z.string().optional(),
   nok_relationship: z.string().optional(),
@@ -46,6 +52,11 @@ interface Customer {
   status: string;
   whatsapp_opt_in: boolean;
   high_switcher?: boolean;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  postcode?: string;
+  country?: string;
   nok_full_name?: string;
   nok_relationship?: string;
   nok_phone?: string;
@@ -78,6 +89,11 @@ export const CustomerFormModal = ({ open, onOpenChange, customer }: CustomerForm
       high_switcher: false,
       status: "Active",
       notes: "",
+      address_line1: "",
+      address_line2: "",
+      city: "",
+      postcode: "",
+      country: "United Kingdom",
       nok_full_name: "",
       nok_relationship: "",
       nok_phone: "",
@@ -105,6 +121,11 @@ export const CustomerFormModal = ({ open, onOpenChange, customer }: CustomerForm
         high_switcher: customer.high_switcher || false,
         status: customer.status as "Active" | "Inactive",
         notes: "",
+        address_line1: customer.address_line1 || "",
+        address_line2: customer.address_line2 || "",
+        city: customer.city || "",
+        postcode: customer.postcode || "",
+        country: customer.country || "United Kingdom",
         nok_full_name: customer.nok_full_name || "",
         nok_relationship: customer.nok_relationship || "",
         nok_phone: customer.nok_phone || "",
@@ -123,6 +144,11 @@ export const CustomerFormModal = ({ open, onOpenChange, customer }: CustomerForm
         high_switcher: false,
         status: "Active",
         notes: "",
+        address_line1: "",
+        address_line2: "",
+        city: "",
+        postcode: "",
+        country: "United Kingdom",
         nok_full_name: "",
         nok_relationship: "",
         nok_phone: "",
@@ -145,6 +171,11 @@ export const CustomerFormModal = ({ open, onOpenChange, customer }: CustomerForm
         whatsapp_opt_in: data.whatsapp_opt_in,
         high_switcher: data.high_switcher,
         status: data.status,
+        address_line1: data.address_line1 || null,
+        address_line2: data.address_line2 || null,
+        city: data.city || null,
+        postcode: data.postcode || null,
+        country: data.country || null,
         nok_full_name: data.nok_full_name || null,
         nok_relationship: data.nok_relationship || null,
         nok_phone: data.nok_phone || null,
@@ -380,6 +411,91 @@ export const CustomerFormModal = ({ open, onOpenChange, customer }: CustomerForm
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="rounded-lg border p-4 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span>Address</span>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="address_line1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address Line 1</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., 12 High Street"
+                        {...field}
+                        className="input-focus"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address_line2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address Line 2 (optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Apt, suite, floor, etc."
+                        {...field}
+                        className="input-focus"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., London" {...field} className="input-focus" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="postcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Postcode</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., SW1A 1AA" {...field} className="input-focus" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input placeholder="United Kingdom" {...field} className="input-focus" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <FormField

@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -11,6 +12,31 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -254,6 +280,10 @@ export type Database = {
       }
       customers: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
           created_at: string | null
           customer_type: string | null
           email: string | null
@@ -266,12 +296,17 @@ export type Database = {
           nok_phone: string | null
           nok_relationship: string | null
           phone: string | null
+          postcode: string | null
           status: string | null
           type: string
           updated_at: string
           whatsapp_opt_in: boolean | null
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           customer_type?: string | null
           email?: string | null
@@ -284,12 +319,17 @@ export type Database = {
           nok_phone?: string | null
           nok_relationship?: string | null
           phone?: string | null
+          postcode?: string | null
           status?: string | null
           type: string
           updated_at?: string
           whatsapp_opt_in?: boolean | null
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           customer_type?: string | null
           email?: string | null
@@ -302,6 +342,7 @@ export type Database = {
           nok_phone?: string | null
           nok_relationship?: string | null
           phone?: string | null
+          postcode?: string | null
           status?: string | null
           type?: string
           updated_at?: string
@@ -3220,6 +3261,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       acquisition_type: ["purchase", "finance", "lease"],
