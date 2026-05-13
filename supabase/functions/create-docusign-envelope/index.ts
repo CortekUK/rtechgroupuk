@@ -129,10 +129,10 @@ function generateRentalAgreementPDF(rental: any, customer: any, vehicle: any): s
 </head>
 <body>
 
-<h1>RTech Group Car Hire Agreement</h1>
+<h1>RTechgroup UK Ltd Car Hire Agreement</h1>
 
 <h2>PARTIES TO AGREEMENT</h2>
-<p><strong>Company:</strong> RTech Group</p>
+<p><strong>Company:</strong> RTechgroup UK Ltd</p>
 <p><strong>Customer:</strong> ${customer.name}</p>
 ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${formatCustomerAddress(customer)}</p>` : ''}
 
@@ -176,7 +176,7 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
 <p><strong>Maintenance:</strong> <span class="checkbox"></span> Included <span class="checkbox"></span> Not Included</p>
 
 <h2>KEY INFORMATION</h2>
-<p><strong>Overdue rentals:</strong> If a rental goes overdue past the 14 day grace period, the vehicle becomes the property of RTech Group and we will pursue repossession.</p>
+<p><strong>Overdue rentals:</strong> If a rental goes overdue past the 14 day grace period, the vehicle becomes the property of RTechgroup UK Ltd and we will pursue repossession.</p>
 <p><strong>Excess mileage:</strong> If vehicle goes over 1500 miles a month, you will be charged 25p per additional mile.</p>
 
 <h2>VEHICLE MILEAGE</h2>
@@ -187,7 +187,7 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
 <table>
   <tr>
     <th>Account Name</th>
-    <td>RTech Group</td>
+    <td>RTechgroup UK Ltd</td>
   </tr>
   <tr>
     <th>Bank Name</th>
@@ -207,11 +207,11 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
 <table>
   <tr>
     <th>Company Name</th>
-    <td>RTech Group</td>
+    <td>RTechgroup UK Ltd</td>
   </tr>
   <tr>
     <th>Trading As</th>
-    <td>RTech Group UK Vehicle Hire</td>
+    <td>RTechgroup UK Ltd Vehicle Hire</td>
   </tr>
   <tr>
     <th>Company Number</th>
@@ -219,7 +219,7 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
   </tr>
   <tr>
     <th>Address</th>
-    <td>68 DAISY BANK ROAD, MANCHESTER, M14 5QP</td>
+    <td>30 Brindley Road, Manchester, M16 9HQ</td>
   </tr>
   <tr>
     <th>Contact Person</th>
@@ -249,7 +249,7 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
   </div>
 
   <div style="margin-top: 60px;">
-    <p><strong>Lessor Signature (RTech Group):</strong></p>
+    <p><strong>Lessor Signature (RTechgroup UK Ltd):</strong></p>
     <div class="signature-line"></div>
     <p style="margin-top: 5px;">Date: ______________</p>
   </div>
@@ -263,7 +263,7 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
   <ul>
     <li><strong>"Vehicle"</strong> means the motor vehicle described in the Key Financial Information section of this Agreement;</li>
     <li><strong>"Hirer"</strong> means the person(s) named as the Customer in this Agreement;</li>
-    <li><strong>"Lessor"</strong> means RTech Group;</li>
+    <li><strong>"Lessor"</strong> means RTechgroup UK Ltd;</li>
     <li><strong>"Monthly Hire"</strong> means the monthly rental payment specified in this Agreement;</li>
     <li><strong>"Deposit"</strong> means the security deposit paid by the Hirer;</li>
   </ul>
@@ -303,7 +303,7 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
   <p>8.1 Either party may terminate this Agreement by giving 30 days' written notice.</p>
   <p>8.2 The Lessor may terminate this Agreement immediately if the Hirer breaches any terms.</p>
   <p>8.3 Upon termination, the Hirer must return the Vehicle in good condition, fair wear and tear excepted.</p>
-  <p>8.4 If rental payments become 14 days overdue, the Vehicle becomes the property of RTech Group and repossession will be pursued.</p>
+  <p>8.4 If rental payments become 14 days overdue, the Vehicle becomes the property of RTechgroup UK Ltd and repossession will be pursued.</p>
 
   <h3>9. GENERAL</h3>
   <p>9.1 This Agreement constitutes the entire agreement between the parties.</p>
@@ -313,7 +313,7 @@ ${formatCustomerAddress(customer) ? `<p><strong>Customer Address:</strong> ${for
 </div>
 
 <p style="text-align: center; margin-top: 40px; font-size: 9pt; color: #666;">
-  RTech Group Car Hire Agreement | Generated: ${new Date().toLocaleDateString('en-GB')}
+  RTechgroup UK Ltd Car Hire Agreement | Generated: ${new Date().toLocaleDateString('en-GB')}
 </p>
 
 </body>
@@ -505,11 +505,11 @@ async function createAndSendEnvelope(
     console.log('Creating DocuSign envelope...');
 
     const envelopeDefinition = {
-      emailSubject: `RTech Group Car Hire Agreement - ${vehicle.reg} - Please Sign`,
+      emailSubject: `RTechgroup UK Ltd Car Hire Agreement - ${vehicle.reg} - Please Sign`,
       documents: [
         {
           documentBase64: documentBase64,
-          name: `RTech_Group_Car_Hire_Agreement_${vehicle.reg}_${rental.id.substring(0, 8)}.html`,
+          name: `RTechgroup_UK_Ltd_Car_Hire_Agreement_${vehicle.reg}_${rental.id.substring(0, 8)}.html`,
           fileExtension: 'html',
           documentId: '1'
         }
